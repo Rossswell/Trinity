@@ -1,0 +1,34 @@
+{
+  "name": "trinity-app",
+  "version": "1.0.0",
+  "description": "Trinity Tool - Calculadora Inteligente",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "author": "Santi",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
+  },
+  "build": {
+    "appId": "com.trinity.app",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Rossswell",
+        "repo": "Trinity",
+        "private": true
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

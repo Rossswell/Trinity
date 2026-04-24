@@ -1,0 +1,2896 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Trinity - Calculadora de listas</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-fixed-dim': '#a9c7ff', 'primary-fixed': '#d6e3ff',
+                        'on-tertiary-fixed-variant': '#005312', 'on-primary-container': '#7594ca',
+                        'surface-container-low': '#f2f4f6', 'on-error': '#ffffff',
+                        'inverse-on-surface': '#eff1f3', 'surface-tint': '#405f91',
+                        'primary-container': '#002b5b', 'outline-variant': '#c4c6d0',
+                        'on-primary-fixed': '#001b3d', 'secondary-fixed-dim': '#accbe0',
+                        'secondary-container': '#c5e4fa', 'surface': '#f7f9fb',
+                        'primary': '#001736', 'on-surface-variant': '#43474f',
+                        'on-error-container': '#93000a', 'on-secondary-fixed-variant': '#2c4a5c',
+                        'inverse-surface': '#2d3133', 'surface-container-highest': '#e0e3e5',
+                        'error-container': '#ffdad6', 'on-background': '#191c1e',
+                        'surface-dim': '#d8dadc', 'surface-bright': '#f7f9fb',
+                        'secondary-fixed': '#c8e7fd', 'tertiary-container': '#003408',
+                        'on-tertiary-fixed': '#002204', 'tertiary-fixed': '#a3f69c',
+                        'surface-container-lowest': '#ffffff', 'outline': '#747780',
+                        'surface-variant': '#e0e3e5', 'surface-container': '#eceef0',
+                        'on-secondary': '#ffffff', 'on-surface': '#191c1e',
+                        'on-secondary-fixed': '#001e2d', 'background': '#f7f9fb',
+                        'on-tertiary': '#ffffff', 'secondary': '#446274',
+                        'on-primary-fixed-variant': '#264778', 'on-tertiary-container': '#55a454',
+                        'on-secondary-container': '#496679', 'surface-container-high': '#e6e8ea',
+                        'inverse-primary': '#a9c7ff', 'tertiary': '#001d03',
+                        'tertiary-fixed-dim': '#88d982', 'on-primary': '#ffffff', 'error': '#ba1a1a'
+                    },
+                    borderRadius: { DEFAULT: '0.125rem', lg: '0.25rem', xl: '0.5rem', full: '0.75rem' },
+                    fontFamily: { headline: ['Manrope'], body: ['Inter'], label: ['Inter'] }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* ── Splash Screen ──────────────────────────────────────────────── */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #001736 0%, #002b5b 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s var(--ease-out), visibility 0.8s;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-logo {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 24px;
+            animation: splash-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes splash-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        .splash-loader {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .splash-loader-bar {
+            height: 100%;
+            width: 0%;
+            background: #a9c7ff;
+            transition: width 0.4s ease-out;
+        }
+
+        /* ── Login Section ──────────────────────────────────────────────── */
+        #section-login:not(.hidden) {
+            background: linear-gradient(135deg, #f7f9fb 0%, #e6e8ea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: white;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s;
+            cursor: pointer;
+            margin-top: 2rem;
+        }
+
+        .google-btn:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .google-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ── Sidebar Colapsable ─────────────────────────────────────────── */
+        #sidebar {
+            transition: width 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+        }
+
+        #sidebar.collapsed {
+            width: 80px;
+            padding-left: 0;
+            padding-right: 0;
+            align-items: center;
+        }
+
+        #sidebar.collapsed .sidebar-header {
+            width: 100%;
+            justify-content: center;
+        }
+
+        #sidebar.collapsed .sidebar-header-logo {
+            display: none;
+        }
+
+        #sidebar.collapsed .nav-item {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            justify-content: center;
+            margin: 0.25rem 0;
+        }
+
+        #sidebar.collapsed .nav-item span:not(.material-symbols-outlined) {
+            display: none;
+        }
+
+        #sidebar.collapsed .nav-label,
+        #sidebar.collapsed .nav-group-title {
+            display: none;
+        }
+
+        #sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.75rem;
+        }
+
+        #main-content {
+            transition: margin-left 0.3s var(--ease-out);
+        }
+
+        #main-content.sidebar-collapsed {
+            margin-left: 80px;
+        }
+
+        .nav-group-title {
+            font-family: 'Manrope';
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #64748b;
+            margin: 2.25rem 0 0.5rem 0.75rem;
+        }
+
+        /* ── Submenús ─────────────────────────────────────────────────── */
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
+            opacity: 0;
+            padding-left: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .submenu.expanded {
+            max-height: 200px;
+            opacity: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item-yellow.bg-blue-100 {
+            background-color: #fef9c3 !important;
+            color: #854d0e !important;
+        }
+
+        .nav-item-blue.bg-blue-100 {
+            background-color: #dbeafe !important;
+            color: #1e40af !important;
+        }
+
+        #sidebar.collapsed .submenu {
+            display: none;
+        }
+
+        /* ── Variables de tema ──────────────────────────────────────────── */
+        :root {
+            --bcv-color: #1a56db;
+            --binance-color: #f0b90b;
+            --bcv-bg: #eff6ff;
+            --binance-bg: #fffbeb;
+            --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Scroll fino ────────────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c4c6d0;
+            border-radius: 99px;
+        }
+
+        /* ── Entrada de secciones ───────────────────────────────────────── */
+        .fade-up {
+            animation: fadeUp 0.4s var(--ease-out) both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px) scale(0.99);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ── Filas de tabla con stagger ─────────────────────────────────── */
+        @keyframes rowIn {
+            from {
+                opacity: 0;
+                transform: translateX(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .row-anim {
+            animation: rowIn 0.3s var(--ease-out) both;
+        }
+
+        /* ── Cuerpo colapsable del mapper ───────────────────────────────── */
+        #mapper-body {
+            overflow: hidden;
+            transition: max-height 0.4s var(--ease-out), opacity 0.35s var(--ease-out);
+            max-height: 1200px;
+            opacity: 1;
+        }
+
+        #mapper-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        #mapper-chevron {
+            transition: transform 0.3s var(--ease-out);
+        }
+
+        #mapper-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        /* ── Preview table ──────────────────────────────────────────────── */
+        #preview-table-wrap {
+            overflow-x: auto;
+        }
+
+        #preview-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        #preview-table th,
+        #preview-table td {
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        #preview-table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Select estilo ──────────────────────────────────────────────── */
+        .col-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2343474f' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 32px;
+        }
+
+        /* ── Badge auto ─────────────────────────────────────────────────── */
+        .auto-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 99px;
+            letter-spacing: 0.04em;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           TOGGLE DE MONEDA — estilo premium como la imagen
+        ══════════════════════════════════════════════════════════════════ */
+        .currency-toggle {
+            display: inline-flex;
+            background: #f0f2f5;
+            border-radius: 14px;
+            padding: 4px;
+            gap: 4px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .currency-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            transition: all 0.22s var(--ease-out);
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .currency-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: currentColor;
+            opacity: 0;
+            border-radius: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .currency-btn:hover::before {
+            opacity: 0.05;
+        }
+
+        .currency-btn .btn-icon {
+            font-size: 17px;
+            transition: transform 0.22s var(--ease-out);
+        }
+
+        /* Estado activo BCV */
+        .currency-btn.active-bcv {
+            background: #ffffff;
+            color: var(--bcv-color);
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
+            transform: translateY(-0.5px);
+        }
+
+        .currency-btn.active-bcv .btn-icon {
+            transform: scale(1.1);
+        }
+
+        /* Estado activo Binance */
+        .currency-btn.active-binance {
+            background: #ffffff;
+            color: #b45309;
+            box-shadow: 0 2px 8px rgba(240, 185, 11, 0.25), 0 1px 3px rgba(0, 0, 0, 0.12);
+            transform: translateY(-0.5px);
+        }
+
+        .currency-btn.active-binance .btn-icon {
+            transform: scale(1.1);
+        }
+
+        /* ── Celdas de precio con highlight según modo ──────────────────── */
+        .price-active {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .price-secondary {
+            font-weight: 600;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* BCV columns highlight */
+        td.col-bcv-hl {
+            background: rgba(26, 86, 219, 0.04);
+        }
+
+        /* Binance columns highlight */
+        td.col-bnb-hl {
+            background: rgba(240, 185, 11, 0.07);
+        }
+
+        /* ── Card hover lift ────────────────────────────────────────────── */
+        .card-lift {
+            transition: box-shadow 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+        }
+
+        .card-lift:hover {
+            box-shadow: 0 8px 24px rgba(0, 23, 54, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* ── Glow de tasas ──────────────────────────────────────────────── */
+        .rate-glow {
+            position: relative;
+            transition: all 0.2s var(--ease-out);
+        }
+
+        .rate-glow::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 8px;
+            background: radial-gradient(circle at 50% 60%, rgba(26, 86, 219, 0.12), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .rate-glow:hover::after {
+            opacity: 1;
+        }
+
+        /* ── Shimmer skeleton para carga ─────────────────────────────── */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f2f5 25%, #e8eaed 50%, #f0f2f5 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 6px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -400px 0;
+            }
+
+            100% {
+                background-position: 400px 0;
+            }
+        }
+
+        /* ── Flash de actualización ──────────────────────────────────── */
+        @keyframes rateFlash {
+            0% {
+                opacity: 1;
+            }
+
+            30% {
+                opacity: 0.3;
+            }
+
+            60% {
+                opacity: 1;
+                color: #1a56db;
+            }
+
+            100% {
+                opacity: 1;
+                color: inherit;
+            }
+        }
+
+        .rate-flash {
+            animation: rateFlash 0.8s ease-out both;
+        }
+
+        /* ── Pulso live indicator ────────────────────────────────────── */
+        @keyframes pulse-live {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
+        .live-dot {
+            animation: pulse-live 2s ease-in-out infinite;
+        }
+
+        /* ── Radio pill personalizado ───────────────────────────────────── */
+        .radio-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 99px;
+            border: 1.5px solid #e2e5ea;
+            cursor: pointer;
+            transition: all 0.18s var(--ease-out);
+            background: white;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .radio-pill:has(input:checked) {
+            border-color: var(--bcv-color);
+            background: var(--bcv-bg);
+            color: var(--bcv-color);
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+        }
+
+        .radio-pill input {
+            display: none;
+        }
+
+        .radio-pill .pill-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .radio-pill:has(input:checked) .pill-dot::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--bcv-color);
+        }
+
+        #tasa-binance-pill:has(input:checked) {
+            border-color: #b45309;
+            background: var(--binance-bg);
+            color: #b45309;
+            box-shadow: 0 0 0 3px rgba(240, 185, 11, 0.15);
+        }
+
+        #tasa-binance-pill:has(input:checked) .pill-dot::after {
+            background: #b45309;
+        }
+
+        /* ── Tabla encabezado ───────────────────────────────────────────── */
+        .th-bcv {
+            color: var(--bcv-color);
+        }
+
+        .th-bnb {
+            color: #b45309;
+        }
+
+        /* ── Progress Bar ── */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 12px;
+            display: none;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #2563eb;
+            transition: width 0.3s ease-out;
+            border-radius: 99px;
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+        }
+
+        @keyframes progress-glow {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        .progress-active .progress-bar {
+            animation: progress-glow 1.5s infinite;
+        }
+
+        /* ── Progress HUD (Toast) ── */
+        #ai-hud {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 50;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: translateY(20px);
+        }
+
+        #ai-hud.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .hud-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+            width: 260px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .hud-percent {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #2563eb;
+            font-family: 'Outfit', sans-serif;
+            margin: 0.5rem 0;
+            letter-spacing: -1.5px;
+        }
+
+        .hud-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .hud-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.2s linear;
+        }
+
+        /* ── Fancy Spinner (ahora es Pulso de IA) ── */
+        .ai-pulse {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto;
+            background: #eff6ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .ai-pulse::before,
+        .ai-pulse::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #3b82f6;
+            opacity: 0.15;
+            animation: pulse-wave 2s infinite;
+        }
+
+        .ai-pulse::after {
+            animation-delay: 1s;
+        }
+
+        .ai-pulse span {
+            color: #3b82f6;
+            font-size: 24px;
+            z-index: 2;
+        }
+
+        @keyframes pulse-wave {
+            0% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+
+            100% {
+                transform: scale(1.8);
+                opacity: 0;
+            }
+        }
+
+        /* ── User Profile Card ──────────────────────────────────────────── */
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .user-card:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .user-avatar-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #001736;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 13px;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            border: 2px solid #e0e3e5;
+            background: #9ca3af;
+        }
+
+        .status-dot.online {
+            background: #22c55e;
+        }
+
+        .status-dot.away {
+            background: #eab308;
+        }
+
+        .status-dot.offline {
+            background: #9ca3af;
+        }
+
+        .status-badge {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+        }
+
+        .status-badge.online {
+            background: #22c55e;
+        }
+
+        .status-badge.away {
+            background: #eab308;
+        }
+
+        .status-badge.offline {
+            background: #9ca3af;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-info-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #001736;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-info-email {
+            font-size: 11px;
+            color: #43474f;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #e0e3e5;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            z-index: 200;
+        }
+
+        .user-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 9px 16px;
+            font-size: 13px;
+            color: #191c1e;
+            font-family: 'Inter', sans-serif;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .user-dropdown button:hover {
+            background: #f2f4f6;
+        }
+
+        .user-dropdown hr {
+            border: none;
+            border-top: 1px solid #e0e3e5;
+            margin: 4px 0;
+        }
+
+        .logout-btn {
+            color: #ba1a1a !important;
+        }
+
+        #sidebar.collapsed .user-card {
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        #sidebar.collapsed .user-info,
+        #sidebar.collapsed .user-more-icon {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface font-body antialiased min-h-screen flex">
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-logo">
+            <span class="material-symbols-outlined text-primary"
+                style="font-size: 50px; font-variation-settings: 'FILL' 1">auto_awesome</span>
+        </div>
+        <div class="text-white font-headline text-2xl font-bold mb-6 tracking-tight">Trinity</div>
+        <div class="splash-loader">
+            <div id="splash-bar" class="splash-loader-bar"></div>
+        </div>
+        <div class="text-blue-200/50 text-[10px] uppercase tracking-widest mt-4 font-bold">Iniciando sistema...</div>
+    </div>
+
+    <!-- Processing HUD -->
+    <div id="ai-hud">
+        <div class="hud-card">
+            <div class="flex justify-center mb-4">
+                <div class="ai-pulse">
+                    <span class="material-symbols-outlined">sync</span>
+                </div>
+            </div>
+            <h3 id="hud-title" class="text-base font-bold text-slate-800 mb-0.5">Procesando Archivo</h3>
+            <p id="hud-subtitle" class="text-slate-500 text-[11px] mb-4 leading-tight">Leyendo estructura del
+                documento...</p>
+
+
+            <div class="hud-bar-bg">
+                <div id="hud-bar" class="hud-bar-fill"></div>
+            </div>
+            <div id="hud-percent" class="hud-percent">0%</div>
+
+            <div class="flex justify-between items-center mt-2">
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Trinity Engine</p>
+                <button onclick="cancelarProceso()"
+                    class="text-xs text-error font-semibold hover:text-red-700 transition active:scale-95">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay para Tasas -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <nav id="sidebar"
+        class="bg-surface-container-highest fixed left-0 top-0 h-full flex flex-col p-6 space-y-1 w-72 hidden z-50 shadow-lg border-r border-outline-variant/30">
+
+        <div class="sidebar-header flex items-center justify-between mb-8">
+            <div class="sidebar-header-logo flex items-center gap-3 overflow-hidden">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-white text-lg"
+                        style="font-variation-settings:'FILL' 1">auto_awesome</span>
+                </div>
+                <div class="font-['Manrope'] text-lg font-bold text-blue-950 nav-label">Trinity</div>
+            </div>
+            <button onclick="toggleSidebar()"
+                class="p-1.5 hover:bg-slate-200 rounded-lg transition-colors text-slate-500" title="Contraer/Expandir">
+                <span class="material-symbols-outlined" style="font-size: 20px;">menu_open</span>
+            </button>
+        </div>
+
+        <a id="nav-casa" onclick="showSection('casa')" href="#"
+            class="nav-item text-blue-950 font-semibold rounded-xl flex items-center p-3 gap-3 hover:bg-slate-200 transition-all cursor-pointer">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">home</span>
+            <span class="font-['Inter'] text-sm font-medium nav-label">Casa</span>
+        </a>
+
+        <!-- Grupo: Herramientas -->
+        <div class="nav-group-title">Herramientas generales</div>
+        <a id="nav-calculadora" onclick="showSection('calculadora')" href="#"
+            class="nav-item text-blue-950 font-semibold rounded-xl flex items-center p-3 gap-3 hover:bg-slate-200 transition-all cursor-pointer">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">calculate</span>
+            <span class="font-['Inter'] text-sm font-medium nav-label">Calculadora</span>
+        </a>
+        <a id="nav-stalker" onclick="showSection('stalker')" href="#"
+            class="nav-item text-blue-950 font-semibold rounded-xl flex items-center p-3 gap-3 hover:bg-slate-200 transition-all cursor-pointer">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">visibility</span>
+            <span class="font-['Inter'] text-sm font-medium nav-label">Stalker</span>
+        </a>
+
+        <!-- Grupo: Activo Motors -->
+        <button onclick="toggleSubmenu('submenu-activo')"
+            class="nav-item w-full flex items-center justify-between p-3 mt-4 rounded-xl text-blue-950 font-bold hover:bg-slate-200 transition-all group">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">directions_car</span>
+                <span class="font-['Manrope'] text-xs uppercase tracking-widest nav-label">Activo Motors</span>
+            </div>
+            <span id="chevron-activo"
+                class="material-symbols-outlined text-slate-400 transition-transform nav-label">expand_more</span>
+        </button>
+
+        <div id="submenu-activo" class="submenu">
+            <a id="nav-inventario" onclick="showSection('inventario')" href="#"
+                class="nav-item text-blue-950 font-semibold rounded-xl flex items-center p-2.5 gap-3 hover:bg-slate-200 transition-all cursor-pointer">
+                <span class="material-symbols-outlined"
+                    style="font-variation-settings:'FILL' 1; font-size: 18px;">inventory_2</span>
+                <span class="font-['Inter'] text-sm font-medium nav-label">Inventario</span>
+            </a>
+            <a id="nav-mercadolibre" onclick="showSection('mercadolibre')" href="#"
+                class="nav-item nav-item-yellow text-blue-950 font-semibold rounded-xl flex items-center p-2.5 gap-3 hover:bg-yellow-100 transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-yellow-600"
+                    style="font-variation-settings:'FILL' 1; font-size: 18px;">storefront</span>
+                <span class="font-['Inter'] text-sm font-medium nav-label">Mercadolibre</span>
+            </a>
+            <a id="nav-marketplace" onclick="showSection('marketplace')" href="#"
+                class="nav-item nav-item-blue text-blue-950 font-semibold rounded-xl flex items-center p-2.5 gap-3 hover:bg-blue-100 transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-blue-600"
+                    style="font-variation-settings:'FILL' 1; font-size: 18px;">shopping_bag</span>
+                <span class="font-['Inter'] text-sm font-medium nav-label">Marketplace</span>
+            </a>
+        </div>
+
+        <!-- ══ User Profile Card ══ -->
+        <div class="mt-auto"></div>
+        <div id="user-section" class="relative pt-4 mt-2 border-t border-outline-variant/30">
+            <div class="user-card rounded-xl" onclick="toggleUserMenu()">
+                <div class="user-avatar-wrap">
+                    <div id="user-avatar" class="user-avatar">
+                        <span class="material-symbols-outlined" style="font-size:18px;color:white">person</span>
+                    </div>
+                    <div id="status-dot" class="status-dot online"></div>
+                </div>
+                <div class="user-info nav-label">
+                    <div id="user-name" class="user-info-name">Sin sesión</div>
+                    <div id="user-email" class="user-info-email">—</div>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 user-more-icon nav-label"
+                    style="font-size:16px">more_vert</span>
+            </div>
+            <div id="user-dropdown" class="user-dropdown hidden">
+                <div class="px-4 py-2.5">
+                    <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Estado</div>
+                </div>
+                <button onclick="setUserStatus('online');event.stopPropagation()">
+                    <span class="status-badge online"></span>Conectado
+                </button>
+                <button onclick="setUserStatus('away');event.stopPropagation()">
+                    <span class="status-badge away"></span>Ausente
+                </button>
+                <button onclick="setUserStatus('offline');event.stopPropagation()">
+                    <span class="status-badge offline"></span>Desconectado
+                </button>
+                <hr>
+                <button class="logout-btn" onclick="logout();event.stopPropagation()">
+                    <span class="material-symbols-outlined" style="font-size:16px">logout</span>Cerrar sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══════════ MAIN ══════════ -->
+    <main id="main-content" class="flex-1 flex flex-col min-h-screen relative">
+
+        <!-- ══ SECCIÓN LOGIN ══ -->
+        <div id="section-login" class="app-section flex-1 flex flex-col">
+            <div class="login-card fade-up">
+                <div
+                    class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span class="material-symbols-outlined text-primary"
+                        style="font-size: 40px; font-variation-settings: 'FILL' 1">auto_awesome</span>
+                </div>
+                <h1 class="font-headline text-3xl font-bold text-primary mb-2 tracking-tight">Bienvenido a Trinity</h1>
+                <p class="text-on-surface-variant text-sm px-4">Accede con tu cuenta institucional para comenzar a
+                    procesar tus listas.</p>
+
+                <button onclick="loginWithGoogle()" class="google-btn">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" height="20"
+                        alt="Google Logo">
+                    <span>Continuar con Google</span>
+                </button>
+
+                <div class="mt-12 pt-8 border-t border-slate-100">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Trinity Secure Access v1.0
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECCIÓN CASA ══ -->
+        <div id="section-casa" class="app-section flex-1 flex flex-col">
+            <header
+                class="w-full min-h-[96px] px-8 py-4 flex flex-wrap items-center justify-between gap-6 bg-surface border-b border-outline-variant/20 sticky top-0 z-[60]">
+                <div>
+                    <h1 class="font-headline text-2xl font-bold text-primary tracking-tight">Casa</h1>
+                    <p class="font-body text-sm text-on-surface-variant mt-1">Pantalla principal de Trinity.</p>
+                </div>
+            </header>
+            <div class="p-8 flex-1 flex flex-col gap-10 max-w-4xl w-full mx-auto">
+
+                <!-- Saludo de Trinity -->
+                <div class="fade-up flex flex-col items-start gap-4 pt-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-md">
+                            <span class="material-symbols-outlined text-white"
+                                style="font-size:24px;font-variation-settings:'FILL' 1">auto_awesome</span>
+                        </div>
+                        <div>
+                            <p
+                                class="font-['Manrope'] text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                                Trinity · Asistente</p>
+                            <div id="trinity-greeting"
+                                class="font-headline text-2xl font-bold text-primary tracking-tight mt-0.5 transition-opacity duration-500">
+                            </div>
+                        </div>
+                    </div>
+                    <p id="trinity-subtext"
+                        class="font-body text-sm text-on-surface-variant leading-relaxed max-w-xl transition-opacity duration-500">
+                    </p>
+                </div>
+
+                <!-- Opciones -->
+                <div class="fade-up" style="animation-delay:0.1s">
+                    <p class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-semibold mb-4">
+                        ¿Qué quieres hacer hoy?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <!-- Calculadora -->
+                        <button onclick="showSection('calculadora')"
+                            class="home-option-card group bg-surface-container-lowest rounded-2xl p-6 text-left shadow-sm border border-outline-variant/30 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 active:scale-[0.98]">
+                            <div
+                                class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors duration-200">
+                                <span
+                                    class="material-symbols-outlined text-blue-700 group-hover:text-white transition-colors duration-200"
+                                    style="font-size:20px;font-variation-settings:'FILL' 1">calculate</span>
+                            </div>
+                            <h3 class="font-headline text-base font-bold text-primary">Calculadora</h3>
+                            <p class="font-body text-xs text-on-surface-variant mt-1 leading-relaxed">Importa una lista
+                                de precios en USD y calcula conversiones BCV / Binance automáticamente.</p>
+                            <div class="flex items-center gap-1 mt-4 text-xs font-semibold text-blue-600">
+                                <span>Abrir</span>
+                                <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
+                            </div>
+                        </button>
+
+                        <!-- Placeholder futuro -->
+                        <div
+                            class="bg-surface-container-low/50 rounded-2xl p-6 border border-dashed border-outline-variant/40 flex flex-col items-center justify-center text-center opacity-50">
+                            <span class="material-symbols-outlined text-on-surface-variant mb-2"
+                                style="font-size:28px">add_circle</span>
+                            <p class="font-body text-xs text-on-surface-variant font-medium">Próximamente</p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══ SECCIÓN CALCULADORA ══ -->
+        <div id="section-calculadora" class="app-section hidden flex-1 flex flex-col">
+
+            <!-- Header Principal -->
+            <header
+                class="w-full min-h-[96px] px-8 py-4 flex flex-wrap items-center justify-between gap-6 bg-surface border-b border-outline-variant/20 sticky top-0 z-[60]">
+                <div>
+                    <h1 class="font-headline text-2xl font-bold text-primary tracking-tight">Calculadora</h1>
+                    <p class="font-body text-sm text-on-surface-variant mt-1">Importa una lista de precios y calcula
+                        conversiones BCV / Binance.</p>
+                </div>
+                <!-- Los controles globales se movieron a la sección de resultados para mejor UX -->
+            </header>
+
+            <div class="p-8 flex-1 flex flex-col gap-8 max-w-7xl w-full mx-auto">
+
+                <!-- ── Paso 1: Tasas + Upload ──────────────────────────────── -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Tasas -->
+                    <div class="lg:col-span-2 bg-surface-container-lowest rounded-2xl p-8 shadow-sm card-lift">
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="material-symbols-outlined text-on-surface-variant text-sm">currency_exchange</span>
+                                <h2
+                                    class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-semibold">
+                                    Tasas de Cambio</h2>
+                                <!-- Indicador LIVE -->
+                                <div id="live-badge"
+                                    class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
+                                    <span class="live-dot w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span id="live-label">cargando...</span>
+                                </div>
+                            </div>
+                            <!-- Botón refrescar -->
+                            <button onclick="fetchTasas()" id="btn-refresh" title="Actualizar tasas"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-low text-on-surface-variant hover:text-primary transition-all active:scale-90">
+                                <span class="material-symbols-outlined" style="font-size:18px">refresh</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-8">
+                            <div class="rate-glow">
+                                <div class="font-body text-xs text-on-surface-variant mb-1 uppercase tracking-wider">
+                                    Oficial
+                                    BCV</div>
+                                <div class="font-headline text-3xl font-bold text-primary" id="display-bcv">
+                                    <span class="shimmer inline-block w-32 h-8 align-middle"></span>
+                                </div>
+                                <div class="text-xs text-blue-600 font-medium mt-1" id="display-bcv-sub">actualizando...
+                                </div>
+                            </div>
+                            <div class="rate-glow">
+                                <div class="font-body text-xs text-on-surface-variant mb-1 uppercase tracking-wider">
+                                    Binance
+                                    P2P</div>
+                                <div class="font-headline text-3xl font-bold text-primary" id="display-binance">
+                                    <span class="shimmer inline-block w-32 h-8 align-middle"></span>
+                                </div>
+                                <div class="text-xs text-amber-600 font-medium mt-1" id="display-binance-sub">
+                                    actualizando...</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between border-t border-outline-variant/10 pt-3">
+                            <div class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-on-surface-variant"
+                                    style="font-size:13px">schedule</span>
+                                <span id="last-updated" class="text-xs text-on-surface-variant">--</span>
+                            </div>
+
+                            <!-- Brecha reubicada a la derecha -->
+                            <div id="gap-indicator"
+                                class="hidden items-center gap-1.5 bg-amber-50 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-200 uppercase tracking-widest shadow-sm">
+                                <span class="material-symbols-outlined italic" style="font-size:12px">trending_up</span>
+                                Brecha: <span id="gap-percent">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload zone -->
+                    <label id="upload-zone"
+                        class="bg-surface-container-lowest rounded-2xl p-6 flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/40 hover:border-blue-400 transition-all duration-300 cursor-pointer group shadow-sm card-lift relative overflow-hidden">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                        <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv" />
+                        <!-- Icono Normal -->
+                        <div id="upload-icon"
+                            class="w-14 h-14 bg-surface-container-low rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-all duration-300 shadow-sm group-hover:shadow-blue-200 group-hover:shadow-lg group-hover:scale-110">
+                            <span
+                                class="material-symbols-outlined text-primary group-hover:text-white transition-colors duration-300"
+                                style="font-size:26px">upload_file</span>
+                        </div>
+                        <!-- Icono Cargando -->
+                        <div id="upload-spinner"
+                            class="hidden w-14 h-14 bg-surface-container-low rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-blue-200 fade-up">
+                            <span class="material-symbols-outlined text-blue-600"
+                                style="font-size:26px; animation: spin 1s linear infinite">sync</span>
+                        </div>
+
+                        <h3 id="upload-title"
+                            class="font-headline text-base font-bold text-primary mb-1 relative transition-colors">Subir
+                            Archivo</h3>
+                        <p id="upload-subtitle"
+                            class="font-body text-xs text-on-surface-variant text-center relative transition-colors">
+                            XLSX,
+                            XLS o CSV</p>
+
+                        <!-- Progress Bar -->
+                        <div id="upload-progress-wrap" class="progress-container max-w-[200px] mx-auto">
+                            <div id="upload-progress-bar" class="progress-bar"></div>
+                        </div>
+
+                        <p id="file-name-label"
+                            class="font-body text-xs text-blue-600 font-semibold mt-2 text-center relative hidden truncate max-w-full">
+                        </p>
+                    </label>
+                </div>
+
+                <!-- ── Paso 2: Configurador de columnas ──────────────────────── -->
+                <div id="column-mapper" class="hidden fade-up">
+                    <div class="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden">
+
+                        <!-- Header clicable -->
+                        <button onclick="toggleMapper()"
+                            class="w-full p-5 flex items-center gap-3 hover:bg-surface-container-low/50 transition-colors text-left group">
+                            <div
+                                class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-200 transition-colors">
+                                <span class="material-symbols-outlined text-blue-700"
+                                    style="font-size:18px">table_view</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h2 class="font-headline text-base font-bold text-primary">Verificar Datos Extraídos
+                                    </h2>
+                                    <div id="row-count-badge"
+                                        class="text-xs font-semibold bg-surface-container text-on-surface-variant px-2.5 py-0.5 rounded-full">
+                                    </div>
+                                </div>
+                                <p id="mapper-summary"
+                                    class="font-body text-xs text-on-surface-variant mt-0.5 truncate">
+                                    Confirma los campos detectados automáticamente antes de procesar.
+                                </p>
+                            </div>
+                            <span id="mapper-chevron"
+                                class="material-symbols-outlined text-on-surface-variant shrink-0">expand_more</span>
+                        </button>
+
+                        <!-- Cuerpo colapsable -->
+                        <div id="mapper-body">
+
+                            <!-- Preview -->
+                            <div class="px-5 pb-4 pt-1 border-t border-outline-variant/20">
+                                <p
+                                    class="font-label text-xs uppercase tracking-wider text-on-surface-variant font-semibold mb-2">
+                                    Vista previa del archivo (10 filas)</p>
+                                <div id="preview-table-wrap"
+                                    class="rounded-xl border border-outline-variant/30 overflow-hidden">
+                                    <table id="preview-table" class="w-full text-left border-collapse">
+                                        <thead id="preview-thead" class="bg-surface-container-low/60"></thead>
+                                        <tbody id="preview-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Selectores -->
+                            <div class="px-5 pb-4 border-t border-outline-variant/20 pt-4">
+                                <p
+                                    class="font-label text-xs uppercase tracking-wider text-on-surface-variant font-semibold mb-3">
+                                    Ajustar mapeo de columnas <span class="font-normal normal-case">(opcional — la IA ya
+                                        detectó los campos)</span></p>
+                                <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                                    <!-- Precio -->
+                                    <div>
+                                        <label class="flex items-center gap-1.5 mb-1">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                            <span class="font-label text-xs font-semibold text-on-surface">Precio
+                                                (USD)</span>
+                                            <span class="text-error text-xs">*</span>
+                                        </label>
+                                        <select id="sel-price"
+                                            class="col-select w-full border border-outline-variant rounded-lg px-2.5 py-2 text-xs text-on-surface bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 transition"></select>
+                                        <p id="price-auto" class="mt-1 hidden"><span
+                                                class="auto-badge bg-emerald-100 text-emerald-700">❖ Auto</span></p>
+                                    </div>
+                                    <!-- Descripción -->
+                                    <div>
+                                        <label class="flex items-center gap-1.5 mb-1">
+                                            <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                                            <span
+                                                class="font-label text-xs font-semibold text-on-surface">Descripción</span>
+                                            <span class="text-error text-xs">*</span>
+                                        </label>
+                                        <select id="sel-desc"
+                                            class="col-select w-full border border-outline-variant rounded-lg px-2.5 py-2 text-xs text-on-surface bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 transition"></select>
+                                        <p id="desc-auto" class="mt-1 hidden"><span
+                                                class="auto-badge bg-blue-100 text-blue-700">❖ Auto</span></p>
+                                    </div>
+                                    <!-- Código -->
+                                    <div>
+                                        <label class="flex items-center gap-1.5 mb-1">
+                                            <span class="w-2 h-2 rounded-full bg-violet-500 shrink-0"></span>
+                                            <span class="font-label text-xs font-semibold text-on-surface">Código</span>
+                                            <span class="text-on-surface-variant text-xs">(opc.)</span>
+                                        </label>
+                                        <select id="sel-code"
+                                            class="col-select w-full border border-outline-variant rounded-lg px-2.5 py-2 text-xs text-on-surface bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 transition"></select>
+                                        <p id="code-auto" class="mt-1 hidden"><span
+                                                class="auto-badge bg-violet-100 text-violet-700">❖ Auto</span></p>
+                                    </div>
+                                    <!-- Proveedor -->
+                                    <div>
+                                        <label class="flex items-center gap-1.5 mb-1">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                                            <span
+                                                class="font-label text-xs font-semibold text-on-surface">Proveedor</span>
+                                            <span class="text-on-surface-variant text-xs">(opc.)</span>
+                                        </label>
+                                        <select id="sel-provider"
+                                            class="col-select w-full border border-outline-variant rounded-lg px-2.5 py-2 text-xs text-on-surface bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 transition"></select>
+                                        <p id="provider-auto" class="mt-1 hidden"><span
+                                                class="auto-badge bg-amber-100 text-amber-700">❖ Auto</span></p>
+                                    </div>
+                                    <!-- Descuento / Observación -->
+                                    <div>
+                                        <label class="flex items-center gap-1.5 mb-1">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+                                            <span
+                                                class="font-label text-xs font-semibold text-on-surface">Descuento/Obs.</span>
+                                            <span class="text-on-surface-variant text-xs">(opc.)</span>
+                                        </label>
+                                        <select id="sel-discount"
+                                            class="col-select w-full border border-outline-variant rounded-lg px-2.5 py-2 text-xs text-on-surface bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 transition"></select>
+                                        <p id="discount-auto" class="mt-1 hidden"><span
+                                                class="auto-badge bg-rose-100 text-rose-700">❖ Auto</span></p>
+                                    </div>
+                                </div>
+                                <!-- Proveedor manual -->
+                                <div id="provider-manual-wrap" class="mt-3 hidden">
+                                    <label class="font-label text-xs text-on-surface-variant mb-1 block">Nombre del
+                                        proveedor (manual)</label>
+                                    <input id="provider-manual-input" type="text" placeholder="Ej: Proveedor General"
+                                        class="w-full sm:w-64 border border-outline-variant rounded-lg px-3 py-2 text-sm text-on-surface bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 transition" />
+                                </div>
+                            </div>
+
+                            <!-- Botón procesar -->
+                            <div
+                                class="px-5 py-4 border-t border-outline-variant/20 flex items-center justify-between gap-4">
+                                <p class="font-body text-xs text-on-surface-variant"><span class="text-error">*</span>
+                                    Requeridos</p>
+                                <button onclick="procesarDatos()"
+                                    class="flex items-center gap-2 bg-primary text-white font-label text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm hover:shadow-md">
+                                    <span class="material-symbols-outlined text-base">play_arrow</span>
+                                    Confirmar y procesar
+                                </button>
+                            </div>
+                        </div><!-- /mapper-body -->
+                    </div>
+                </div>
+
+
+                <!-- ── Paso 3: Resultados ─────────────────────────────────────── -->
+                <div id="results-section"
+                    class="bg-surface-container-lowest rounded-2xl flex flex-col overflow-hidden shadow-sm">
+
+                    <!-- Header con Buscador y Controles -->
+                    <div
+                        class="px-6 py-5 border-b border-outline-variant/20 flex flex-wrap items-center justify-between gap-6">
+                        <div class="flex-1 min-w-[240px]">
+                            <h2 id="results-title"
+                                class="font-headline text-xl font-bold text-primary truncate max-w-[350px]">Resultados
+                                del
+                                Proceso</h2>
+                            <div id="result-count" class="text-xs text-on-surface-variant font-medium mt-0.5 hidden">
+                            </div>
+                        </div>
+
+                        <!-- Controles de Resultados movidos al Modal -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="results-empty-state"
+                        class="p-12 flex flex-col items-center justify-center text-center bg-surface-container-lowest/50">
+                        <p class="text-on-surface-variant text-sm italic">Esperando archivo...</p>
+                    </div>
+
+                    <!-- Estado Procesamiento Completado -->
+                    <div id="results-processing-complete"
+                        class="px-8 py-14 flex flex-col items-center justify-center text-center hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-low/20">
+                        <div
+                            class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5 border-[6px] border-emerald-50 shadow-sm relative">
+                            <span class="material-symbols-outlined text-[44px] text-emerald-500">done_all</span>
+                        </div>
+                        <h3 class="font-headline text-2xl font-bold text-slate-800 tracking-tight">¡Cálculos
+                            Completados!
+                        </h3>
+                        <p class="text-slate-500 text-sm max-w-lg mt-3 mb-8 leading-relaxed">Trinity ha procesado y
+                            aplicado
+                            las fórmulas de tasas correctamente a todos los productos según los parámetros configurados.
+                        </p>
+
+                        <button onclick="abrirVistaPrevia()"
+                            class="flex items-center gap-3 h-14 border border-outline-variant text-white font-label text-base font-bold pl-6 pr-7 rounded-2xl bg-slate-800 hover:bg-slate-900 active:scale-95 transition-all shadow-xl shadow-slate-900/10 group">
+                            <span class="material-symbols-outlined group-hover:text-amber-300 transition-colors"
+                                style="font-size:24px">visibility</span>
+                            Observar Conversión
+                        </button>
+                        <p class="text-xs text-slate-400 mt-5 font-medium"><span id="result-count"
+                                class="font-bold"></span>
+                            productos estructurados.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!-- /section-calculadora -->
+
+        <!-- ══ SECCIÓN STALKER ══ -->
+        <div id="section-stalker" class="app-section hidden flex-1 flex flex-col items-center justify-center p-8">
+            <div class="text-center fade-up">
+                <div
+                    class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span class="material-symbols-outlined text-slate-600" style="font-size: 40px;">visibility</span>
+                </div>
+                <h2 class="font-headline text-2xl font-bold text-primary mb-2">Trinity Stalker</h2>
+                <p class="text-on-surface-variant max-w-md mx-auto">Monitorea y analiza cambios en tiempo real para
+                    obtener una ventaja competitiva.</p>
+                <div
+                    class="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-full text-xs font-bold uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-sm">construction</span> En Desarrollo
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECCIÓN INVENTARIO ══ -->
+        <div id="section-inventario" class="app-section hidden flex-1 flex flex-col items-center justify-center p-8">
+            <div class="text-center fade-up">
+                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-emerald-600" style="font-size: 40px;">inventory_2</span>
+                </div>
+                <h2 class="font-headline text-2xl font-bold text-primary mb-2">Inventario Activo Motors</h2>
+                <p class="text-on-surface-variant max-w-md mx-auto">Este módulo te permitirá gestionar el stock de
+                    repuestos y vehículos de forma centralizada.</p>
+                <div
+                    class="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-sm">construction</span> En Desarrollo
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECCIÓN MERCADOLIBRE ══ -->
+        <div id="section-mercadolibre" class="app-section hidden flex-1 flex flex-col items-center justify-center p-8">
+            <div class="text-center fade-up">
+                <div class="w-20 h-20 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-yellow-600" style="font-size: 40px;">storefront</span>
+                </div>
+                <h2 class="font-headline text-2xl font-bold text-primary mb-2">Mercadolibre Activo Motors</h2>
+                <p class="text-on-surface-variant max-w-md mx-auto">Sincroniza tus publicaciones y gestiona las ventas
+                    de Mercadolibre directamente desde Trinity.</p>
+                <div
+                    class="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-sm">construction</span> En Desarrollo
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECCIÓN MARKETPLACE ══ -->
+        <div id="section-marketplace" class="app-section hidden flex-1 flex flex-col items-center justify-center p-8">
+            <div class="text-center fade-up">
+                <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-blue-600" style="font-size: 40px;">shopping_bag</span>
+                </div>
+                <h2 class="font-headline text-2xl font-bold text-primary mb-2">Facebook Marketplace</h2>
+                <p class="text-on-surface-variant max-w-md mx-auto">Optimiza tus ventas en Marketplace con herramientas
+                    de publicación masiva e inteligente.</p>
+                <div
+                    class="mt-8 inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-sm">construction</span> En Desarrollo
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Vista Previa -->
+    <dialog id="preview-modal"
+        class="bg-transparent m-auto p-0 w-[95vw] max-w-[1400px] h-[90vh] backdrop:bg-slate-900/60 backdrop:backdrop-blur-md rounded-2xl shadow-2xl border border-outline-variant/30 overflow-hidden">
+        <div class="bg-surface flex flex-col overflow-hidden w-full h-full">
+
+            <!-- Header del Modal -->
+            <div
+                class="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-lowest gap-5 flex-wrap">
+                <div class="flex-none hidden sm:block">
+                    <h3 class="font-headline font-bold text-base text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">table_chart</span>
+                        Vista Previa de Exportación
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-1 font-medium"><span id="modal-subtitle-text"></span>
+                        productos listos para exportar.</p>
+                </div>
+
+                <!-- Barra de Búsqueda Integrada -->
+                <div id="modal-search-container" class="flex-1 max-w-sm relative group">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[18px]">search</span>
+                    <input type="text" id="productSearch" oninput="filtrarProductos()" placeholder="Buscar producto..."
+                        class="w-full h-10 pl-9 pr-3 bg-white border border-outline-variant/40 rounded-lg text-xs focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-sm">
+                </div>
+
+                <!-- Controles de Exportación y Moneda -->
+                <div class="flex items-center gap-3 flex-none">
+                    <div
+                        class="currency-toggle h-10 items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <button id="toggle-bcv"
+                            class="currency-btn h-full active-bcv text-xs px-3 rounded-md font-bold text-slate-600 transition-colors"
+                            onclick="togglePrecio('bcv')">BCV ($)</button>
+                        <button id="toggle-binance"
+                            class="currency-btn h-full text-xs px-3 rounded-md font-medium text-slate-500 transition-colors"
+                            onclick="togglePrecio('binance')">Binance ($)</button>
+                    </div>
+
+                    <button id="btn-export" onclick="document.getElementById('preview-modal').close(); exportarXLSX()"
+                        class="flex items-center gap-2 h-10 border border-emerald-600 text-white font-label text-xs font-bold px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all shadow-sm">
+                        <span class="material-symbols-outlined" style="font-size:16px">download</span> Exportar Excel
+                    </button>
+
+                    <div class="w-px h-6 bg-slate-200 mx-1"></div>
+                    <button onclick="document.getElementById('preview-modal').close()"
+                        class="material-symbols-outlined text-slate-400 hover:text-slate-800 transition-colors rounded-lg p-1.5 hover:bg-slate-100 focus:outline-none"
+                        title="Cerrar">close</button>
+                </div>
+            </div>
+
+            <!-- Tabla del Modal -->
+            <div class="overflow-auto bg-white custom-scrollbar flex-1 relative w-full">
+                <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap min-w-max">
+                    <thead
+                        class="bg-surface-container-low/90 border-b border-outline-variant/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
+                        <tr>
+                            <th
+                                class="p-3 font-bold text-slate-700 bg-slate-50/90 border-r border-outline-variant/30 uppercase tracking-wider">
+                                CÓDIGO</th>
+                            <th
+                                class="p-3 font-bold text-slate-700 bg-slate-50/90 border-r border-outline-variant/30 uppercase tracking-wider">
+                                DESCRIPCIÓN</th>
+                            <th
+                                class="p-3 font-bold text-slate-700 bg-slate-50/90 border-r border-outline-variant/30 text-right uppercase tracking-wider">
+                                PRECIO DEL PRODUCTO</th>
+                            <th
+                                class="p-3 font-bold text-slate-700 bg-slate-50/90 border-r border-outline-variant/30 text-right uppercase tracking-wider">
+                                Bs BCV</th>
+                            <th
+                                class="p-3 font-bold text-slate-700 bg-slate-50/90 border-r border-outline-variant/30 text-right uppercase tracking-wider">
+                                BCV ($)</th>
+                            <th
+                                class="p-3 font-bold text-slate-700 bg-slate-50/90 border-r-2 border-outline-variant/50 text-right uppercase tracking-wider">
+                                BINANCE ($)</th>
+
+                            <th
+                                class="p-3 font-bold text-emerald-800 bg-emerald-50/90 border-r border-outline-variant/30 uppercase tracking-wider">
+                                Precio con desc. especial</th>
+                            <th
+                                class="p-3 font-bold text-emerald-800 bg-emerald-50/90 border-r border-outline-variant/30 text-right uppercase tracking-wider">
+                                Bs BCV</th>
+                            <th
+                                class="p-3 font-bold text-emerald-800 bg-emerald-50/90 border-r border-outline-variant/30 text-right uppercase tracking-wider">
+                                BCV ($)</th>
+                            <th
+                                class="p-3 font-bold text-emerald-800 bg-emerald-50/90 text-right uppercase tracking-wider">
+                                BINANCE ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-tbody" class="font-body text-[11px]">
+                        <!-- renderizado con javascript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- ══════════ SCRIPT ══════════ -->
+    <script>
+        // ─── Google OAuth ──────────────────────────────────────────────────
+        // Reemplaza esto con tu Client ID de Google Cloud Console
+        const GOOGLE_CLIENT_ID = '79530461218-imtlegmvfu6ffd8d7mdk8m5l5j7d2u6j.apps.googleusercontent.com';
+        let currentUser = null;
+        let userStatus = 'online';
+
+        // ─── Navegación de Secciones ───────────────────────────────────────
+        let isSidebarCollapsed = false;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.querySelector('button[onclick="toggleSidebar()"] span');
+
+            isSidebarCollapsed = !isSidebarCollapsed;
+
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                if (!sidebar.classList.contains('hidden')) {
+                    mainContent.classList.add('sidebar-collapsed');
+                    mainContent.classList.remove('md:ml-72');
+                }
+                if (toggleBtn) toggleBtn.textContent = 'menu';
+            } else {
+                sidebar.classList.remove('collapsed');
+                if (!sidebar.classList.contains('hidden')) {
+                    mainContent.classList.remove('sidebar-collapsed');
+                    mainContent.classList.add('md:ml-72');
+                }
+                if (toggleBtn) toggleBtn.textContent = 'menu_open';
+            }
+        }
+
+        function toggleSubmenu(id) {
+            const submenu = document.getElementById(id);
+            const chevron = document.getElementById('chevron-activo');
+
+            // Si la barra está colapsada, expandirla primero
+            if (isSidebarCollapsed) toggleSidebar();
+
+            submenu.classList.toggle('expanded');
+            if (chevron) {
+                chevron.style.transform = submenu.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        }
+
+        function showSection(sectionId) {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+
+            // Manejo de visibilidad del Sidebar y Layout
+            if (sectionId === 'login') {
+                if (sidebar) sidebar.classList.add('hidden');
+                if (mainContent) {
+                    mainContent.classList.remove('md:ml-72', 'sidebar-collapsed');
+                }
+            } else {
+                if (sidebar) {
+                    sidebar.classList.remove('hidden');
+                    sidebar.classList.add('md:flex');
+                }
+                if (mainContent) {
+                    if (isSidebarCollapsed) {
+                        mainContent.classList.add('sidebar-collapsed');
+                        mainContent.classList.remove('md:ml-72');
+                    } else {
+                        mainContent.classList.add('md:ml-72');
+                        mainContent.classList.remove('sidebar-collapsed');
+                    }
+                }
+            }
+
+            // Expandir submenú automáticamente si seleccionamos un hijo
+            const subItemsActivo = ['inventario', 'mercadolibre', 'marketplace'];
+            if (subItemsActivo.includes(sectionId)) {
+                const submenu = document.getElementById('submenu-activo');
+                if (submenu && !submenu.classList.contains('expanded')) toggleSubmenu('submenu-activo');
+            }
+
+            // Ocultar todas las secciones
+            document.querySelectorAll('.app-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            // Mostrar la sección seleccionada
+            const targetSection = document.getElementById(`section-${sectionId}`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                // Animar entrada
+                targetSection.classList.remove('fade-up');
+                void targetSection.offsetWidth; // Reflow
+                targetSection.classList.add('fade-up');
+            }
+
+            // Actualizar estado visual de la navegación
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                if (nav.id === `nav-${sectionId}`) {
+                    nav.classList.add('bg-blue-100', 'text-blue-600', 'shadow-sm');
+                    nav.classList.remove('text-blue-950', 'hover:bg-slate-200');
+                } else {
+                    nav.classList.remove('bg-blue-100', 'text-blue-600', 'shadow-sm');
+                    nav.classList.add('text-blue-950', 'hover:bg-slate-200');
+                }
+            });
+        }
+
+        // ─── Inicialización de Saludo ──────────────────────────────────────
+        function initGreeting() {
+            const greetingEl = document.getElementById('trinity-greeting');
+            const subtextEl = document.getElementById('trinity-subtext');
+            if (!greetingEl || !subtextEl) return;
+
+            const hour = new Date().getHours();
+            let greeting = '¡Hola! Soy Trinity';
+            if (hour < 12) greeting = 'Buenos días, soy Trinity';
+            else if (hour < 18) greeting = 'Buenas tardes, soy Trinity';
+            else greeting = 'Buenas noches, soy Trinity';
+
+            greetingEl.style.opacity = '0';
+            subtextEl.style.opacity = '0';
+
+            setTimeout(() => {
+                greetingEl.textContent = greeting;
+                greetingEl.style.opacity = '1';
+            }, 100);
+
+            setTimeout(() => {
+                subtextEl.textContent = 'Tu asistente personal para el procesamiento de datos y cálculo de divisas en tiempo real.';
+                subtextEl.style.opacity = '1';
+            }, 400);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animación de Splash Screen
+            const splashBar = document.getElementById('splash-bar');
+            const splashScreen = document.getElementById('splash-screen');
+
+            setTimeout(() => {
+                if (splashBar) splashBar.style.width = '30%';
+            }, 200);
+
+            setTimeout(() => {
+                if (splashBar) splashBar.style.width = '70%';
+            }, 600);
+
+            setTimeout(() => {
+                if (splashBar) splashBar.style.width = '100%';
+            }, 1000);
+
+            setTimeout(() => {
+                if (splashScreen) splashScreen.classList.add('hidden');
+                // Iniciar en Login (esto ocultará el sidebar automáticamente)
+                showSection('login');
+                initGreeting();
+            }, 1400);
+
+            // --- Escuchar actualizaciones ---
+            if (window.api) {
+                window.api.onUpdateMessage((message) => {
+                    console.log('[Update]', message);
+                    const subtext = document.getElementById('trinity-subtext');
+                    if (subtext) subtext.textContent = message;
+                });
+
+                window.api.onUpdateProgress((percent) => {
+                    showHUD('Actualizando Trinity', `Descargando componentes...`);
+                    updateHUD(percent);
+                });
+
+                window.api.onUpdateDownloaded((message) => {
+                    hideHUD();
+                    alert(message);
+                });
+            }
+        });
+
+        const GOOGLE_BTN_DEFAULT = '<img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="20" height="20" alt="Google Logo"><span>Continuar con Google</span>';
+
+        function resetLoginBtn() {
+            const btn = document.querySelector('.google-btn');
+            if (btn) { btn.innerHTML = GOOGLE_BTN_DEFAULT; btn.disabled = false; }
+        }
+
+        function loginWithGoogle() {
+            const btn = document.querySelector('.google-btn');
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span><span>Conectando...</span>';
+            btn.disabled = true;
+
+            // Sin Client ID real → modo demo: entrar directamente
+            if (GOOGLE_CLIENT_ID.startsWith('TU_CLIENT_ID')) {
+                console.warn('[Trinity] Configura GOOGLE_CLIENT_ID en index.html:1582 con tu Client ID de Google Cloud Console.');
+                currentUser = { name: 'Demo User', email: 'demo@trinity.app', picture: null, sub: 'demo' };
+                updateUserCard();
+                setTimeout(() => { resetLoginBtn(); showSection('casa'); }, 800);
+                return;
+            }
+
+            // GIS no cargó
+            if (typeof google === 'undefined' || !google.accounts) {
+                btn.innerHTML = '<span class="material-symbols-outlined text-red-500">error</span><span>Sin conexión a Google</span>';
+                setTimeout(resetLoginBtn, 2500);
+                return;
+            }
+
+            // Timeout de seguridad: si GIS no responde en 10s, resetear botón
+            const safetyTimer = setTimeout(resetLoginBtn, 10000);
+
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: (response) => { clearTimeout(safetyTimer); handleCredentialResponse(response); },
+                auto_select: false,
+                cancel_on_tap_outside: true,
+                ux_mode: 'popup'
+            });
+
+            google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    clearTimeout(safetyTimer);
+                    resetLoginBtn();
+                }
+            });
+        }
+
+        function handleCredentialResponse(response) {
+            const parts = response.credential.split('.');
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            currentUser = {
+                name: payload.name,
+                email: payload.email,
+                picture: payload.picture,
+                sub: payload.sub
+            };
+            updateUserCard();
+            showSection('casa');
+        }
+
+        function updateUserCard() {
+            if (!currentUser) return;
+            const nameEl = document.getElementById('user-name');
+            const emailEl = document.getElementById('user-email');
+            const avatarEl = document.getElementById('user-avatar');
+            if (nameEl) nameEl.textContent = currentUser.name;
+            if (emailEl) emailEl.textContent = currentUser.email;
+            if (avatarEl) {
+                if (currentUser.picture) {
+                    avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}">`;
+                } else {
+                    const initials = currentUser.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    avatarEl.textContent = initials;
+                }
+            }
+        }
+
+        function setUserStatus(status) {
+            userStatus = status;
+            const dot = document.getElementById('status-dot');
+            if (dot) dot.className = `status-dot ${status}`;
+            document.getElementById('user-dropdown').classList.add('hidden');
+        }
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown) dropdown.classList.toggle('hidden');
+        }
+
+        function logout() {
+            if (typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.disableAutoSelect();
+            }
+            currentUser = null;
+            const nameEl = document.getElementById('user-name');
+            const emailEl = document.getElementById('user-email');
+            const avatarEl = document.getElementById('user-avatar');
+            if (nameEl) nameEl.textContent = 'Sin sesión';
+            if (emailEl) emailEl.textContent = '—';
+            if (avatarEl) avatarEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;color:white">person</span>';
+            document.getElementById('user-dropdown').classList.add('hidden');
+            showSection('login');
+        }
+
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('user-dropdown');
+            const section = document.getElementById('user-section');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                if (!section || !section.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        });
+
+        // ─── Tasas de cambio (dinámicas desde API) ─────────────────────────
+        let TASA_BCV = 36.42;  // fallback
+        let TASA_BINANCE = 38.15;  // fallback
+        let apiError = false;
+
+        async function fetchTasas() {
+            const refreshBtn = document.getElementById('btn-refresh');
+            const liveLabel = document.getElementById('live-label');
+            const liveBadge = document.getElementById('live-badge');
+
+            // Animar botón de refresh
+            if (refreshBtn) refreshBtn.querySelector('span').style.animation = 'spin 0.7s linear';
+            liveLabel.textContent = 'actualizando...';
+
+            try {
+                const res = await fetch('https://ve.dolarapi.com/v1/dolares');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();  // array de tasas
+
+                // Buscar BCV/Oficial y Binance/Paralelo
+                const bcvObj = data.find(d => d.fuente === 'oficial' || d.nombre?.toLowerCase().includes('oficial'));
+                const binanceObj = data.find(d => d.fuente === 'paralelo' || d.fuente === 'binance' || d.nombre?.toLowerCase().includes('binance'));
+
+                const nuevoBCV = bcvObj?.promedio || bcvObj?.precio || TASA_BCV;
+                const nuevoBinance = binanceObj?.promedio || binanceObj?.precio || TASA_BINANCE;
+
+                const cambio = nuevoBCV !== TASA_BCV || nuevoBinance !== TASA_BINANCE;
+                TASA_BCV = nuevoBCV;
+                TASA_BINANCE = nuevoBinance;
+
+                // Actualizar UI con animación flash y punto (.) decimal
+                const bcvEl = document.getElementById('display-bcv');
+                const bnbEl = document.getElementById('display-binance');
+
+                bcvEl.innerHTML = `Bs. ${TASA_BCV.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                bnbEl.innerHTML = `Bs. ${TASA_BINANCE.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                document.getElementById('display-bcv-sub').textContent = `$1 = Bs. ${TASA_BCV.toFixed(2)}`;
+                document.getElementById('display-binance-sub').textContent = `$1 = Bs. ${TASA_BINANCE.toFixed(2)}`;
+
+                // Actualizar tasas en labels de la UI (si hubiera)
+                const lastUpd = document.getElementById('last-updated');
+                if (lastUpd) {
+                    const now = new Date();
+                    lastUpd.textContent = `Actualizado: ${now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}`;
+                }
+
+                if (cambio) {
+                    bcvEl.classList.remove('rate-flash');
+                    bnbEl.classList.remove('rate-flash');
+                    void bcvEl.offsetWidth; // reflow
+                    bcvEl.classList.add('rate-flash');
+                    bnbEl.classList.add('rate-flash');
+                    // Re-renderizar tabla del modal si está abierto y hay datos
+                    if (currentProducts.length && document.getElementById('preview-modal').open) {
+                        filtrarProductos();
+                    }
+                }
+
+                // Live badge — verde
+                liveBadge.className = 'flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-200';
+                liveLabel.textContent = 'En vivo';
+                apiError = false;
+
+                // Calcular brecha
+                const brecha = ((TASA_BINANCE - TASA_BCV) / TASA_BCV) * 100;
+                const gapInd = document.getElementById('gap-indicator');
+                const gapPct = document.getElementById('gap-percent');
+                if (gapInd && gapPct) {
+                    gapPct.textContent = `${brecha.toFixed(2)}%`;
+                    gapInd.classList.remove('hidden');
+                    gapInd.classList.add('flex');
+                }
+
+                // Última actualización
+                const now = new Date();
+                const fechaApi = bcvObj?.fechaActualizacion ? new Date(bcvObj.fechaActualizacion) : now;
+                document.getElementById('last-updated').textContent =
+                    `Actualizado: ${now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}` +
+                    (bcvObj?.fechaActualizacion ? ` · Fuente: ${fechaApi.toLocaleDateString('es-VE')}` : '');
+
+            } catch (err) {
+                console.error('DolarAPI error:', err);
+                apiError = true;
+
+                // Mostrar fallback
+                document.getElementById('display-bcv').textContent = `Bs. ${TASA_BCV.toFixed(2)}`;
+                document.getElementById('display-binance').textContent = `Bs. ${TASA_BINANCE.toFixed(2)}`;
+                document.getElementById('display-bcv-sub').textContent = 'Tasa de respaldo';
+                document.getElementById('display-binance-sub').textContent = 'Tasa de respaldo';
+
+                // Live badge — rojo (error)
+                liveBadge.className = 'flex items-center gap-1.5 bg-red-50 text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full border border-red-200';
+                liveLabel.textContent = 'sin conexión';
+                document.getElementById('last-updated').textContent = 'No se pudo conectar con la API · Usando tasas de respaldo';
+            } finally {
+                if (refreshBtn) refreshBtn.querySelector('span').style.animation = '';
+            }
+        }
+
+        // Obtener tasas al cargar y cada 5 minutos
+        fetchTasas();
+        setInterval(fetchTasas, 5 * 60 * 1000);
+
+        // ─── Estado global ─────────────────────────────────────────────────
+        let fileRows = [];
+        let fileHeaders = [];
+        let currentProducts = [];
+        let activePrecio = 'bcv';
+        let mapperExpanded = true;
+        let activeFingerprint = null;
+
+        function getColumnLetter(colIndex) {
+            let letter = '';
+            while (colIndex >= 0) {
+                letter = String.fromCharCode((colIndex % 26) + 65) + letter;
+                colIndex = Math.floor(colIndex / 26) - 1;
+            }
+            return letter;
+        }
+
+        // ─── Custom Premium Dropdowns ──────────────────────────────────────
+        function convertSelectToCustom(selectId) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+
+            const existing = sel.nextElementSibling;
+            if (existing && existing.classList.contains('custom-dd-wrap')) {
+                existing.remove();
+            }
+
+            // Ocultar select nativo y asegurar que no interfiera en layout
+            sel.style.display = 'none';
+
+            const wrap = document.createElement('div');
+            wrap.className = 'custom-dd-wrap relative w-full';
+
+            const header = document.createElement('div');
+            header.className = 'w-full border border-outline-variant rounded-lg px-2.5 py-2 text-xs text-on-surface bg-surface cursor-pointer flex justify-between items-center hover:border-blue-400 focus:outline-none transition-all shadow-sm h-[38px]';
+
+            const selectedText = document.createElement('div');
+            selectedText.className = 'flex-1 min-w-0 pr-2 pointer-events-none truncate flex items-center leading-none mt-0.5';
+            header.appendChild(selectedText);
+
+            const icon = document.createElement('span');
+            icon.className = 'material-symbols-outlined text-[18px] pointer-events-none text-on-surface-variant shrink-0';
+            icon.textContent = 'expand_more';
+            header.appendChild(icon);
+
+            const list = document.createElement('div');
+            list.className = 'custom-dd-list hidden absolute z-50 left-0 right-0 max-h-60 overflow-y-auto bg-surface border border-outline-variant shadow-xl shadow-blue-900/10 rounded-xl mt-1.5 py-1.5 custom-scrollbar backdrop-blur-md bg-white/95';
+
+            const updateSelected = () => {
+                const opt = sel.options[sel.selectedIndex];
+                if (!opt) return;
+
+                if (opt.value === '-1') {
+                    selectedText.innerHTML = `<span class="italic text-slate-500 font-medium">— Ninguna —</span>`;
+                } else {
+                    selectedText.innerHTML = `
+                        <span class="font-bold text-slate-800 tracking-wider text-[11px] mr-1.5">${opt.dataset.col}</span>
+                        <span class="text-slate-500 font-medium truncate text-[11px] bg-slate-100 px-1 py-0.5 rounded leading-none">${opt.dataset.head}</span>
+                    `;
+                }
+
+                if (sel.id === 'sel-provider') {
+                    document.getElementById('provider-manual-wrap').classList.toggle('hidden', sel.value !== '-1');
+                }
+            };
+
+            Array.from(sel.options).forEach((opt, idx) => {
+                const item = document.createElement('div');
+                item.className = 'px-3 py-2 text-xs text-on-surface cursor-pointer hover:bg-blue-50 transition-colors border-b border-outline-variant/5 last:border-0 flex flex-col gap-0.5';
+
+                if (opt.value === '-1') {
+                    item.innerHTML = `<span class="italic text-slate-500 py-1 font-medium text-center"> — Ninguna — </span>`;
+                } else {
+                    item.innerHTML = `
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-slate-800 text-[10px] uppercase tracking-wider">${opt.dataset.col}</span>
+                            <span class="text-[9px] text-slate-400 font-mono tracking-tighter truncate max-w-[80px] bg-slate-50 px-1 rounded border border-slate-100">${opt.dataset.head}</span>
+                        </div>
+                        <div class="text-slate-500 truncate text-[10px] font-medium leading-relaxed bg-white rounded shadow-sm border border-slate-100/50 p-1">
+                             <span class="text-blue-400 mr-0.5 opacity-80">→</span> "${opt.dataset.sample}"
+                        </div>
+                    `;
+                }
+
+                item.addEventListener('click', () => {
+                    sel.selectedIndex = idx;
+                    sel.dispatchEvent(new Event('change'));
+                    updateSelected();
+                    list.classList.add('hidden');
+                    header.classList.remove('ring-2', 'ring-blue-300', 'border-blue-400');
+                });
+                list.appendChild(item);
+            });
+
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = list.classList.contains('hidden');
+                document.querySelectorAll('.custom-dd-list').forEach(l => l.classList.add('hidden'));
+                document.querySelectorAll('.custom-dd-wrap > div:first-child').forEach(h => h.classList.remove('ring-2', 'ring-blue-300', 'border-blue-400'));
+                if (isHidden) {
+                    list.classList.remove('hidden');
+                    header.classList.add('ring-2', 'ring-blue-300', 'border-blue-400');
+
+                    // Asegurar que el elemento seleccionado esté a la vista
+                    const selectedItem = list.children[sel.selectedIndex];
+                    if (selectedItem) {
+                        setTimeout(() => selectedItem.scrollIntoView({ block: 'nearest' }), 10);
+                    }
+                }
+            });
+
+            wrap.appendChild(header);
+            wrap.appendChild(list);
+            sel.insertAdjacentElement('afterend', wrap);
+
+            updateSelected();
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.custom-dd-list').forEach(l => l.classList.add('hidden'));
+            document.querySelectorAll('.custom-dd-wrap > div:first-child').forEach(h => h.classList.remove('ring-2', 'ring-blue-300', 'border-blue-400'));
+        });
+
+        // ─── Detección heurística de columnas (sin IA) ───────────────────
+        // Palabras clave por campo para detectar columnas por encabezado
+        const KEYWORDS = {
+            price: ['precio', 'price', 'costo', 'cost', 'valor', 'value', 'usd', '$', 'monto', 'amount', 'unit'],
+            desc: ['descripcion', 'description', 'nombre', 'name', 'producto', 'product', 'articulo', 'item', 'detalle', 'detail'],
+            code: ['codigo', 'code', 'ref', 'referencia', 'sku', 'id', 'clave', 'key', 'part'],
+            provider: ['proveedor', 'provider', 'marca', 'brand', 'fabricante', 'supplier', 'company', 'empresa'],
+            discount: ['descuento', 'discount', 'oferta', 'offer', 'especial', 'special', 'promo', 'credito', 'credit', 'liquidacion']
+        };
+
+        function esNumerico(val) {
+            if (val === null || val === undefined || val === '') return false;
+            const s = String(val).trim().replace(/[^\d,.]/g, '');
+            if (!s) return false;
+            return !isNaN(parseFloat(s.replace(',', '.')));
+        }
+
+        function mapearColumnasHeuristico(headers, previewRows) {
+            const norm = headers.map(h => String(h || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+            const result = { price: null, description: null, code: null, provider: null, discount: null };
+            const used = new Set();
+
+            // 1ª pasada — buscar por palabras clave en encabezados
+            for (const [field, kws] of Object.entries(KEYWORDS)) {
+                for (let i = 0; i < norm.length; i++) {
+                    if (used.has(i)) continue;
+                    if (kws.some(kw => norm[i].includes(kw))) {
+                        const key = field === 'desc' ? 'description' : field;
+                        result[key] = i;
+                        used.add(i);
+                        break;
+                    }
+                }
+            }
+
+            // 2ª pasada — para price/description no detectados, usar análisis de valores
+            if (result.price === null || result.description === null) {
+                // Columnas con mayoría de valores numéricos → precio
+                // Columnas con texto largo → descripción
+                const stats = headers.map((_, i) => {
+                    const vals = previewRows.map(r => r[i]).filter(v => v !== '' && v != null);
+                    const numCount = vals.filter(v => esNumerico(v)).length;
+                    const avgLen = vals.length ? vals.reduce((a, v) => a + String(v).length, 0) / vals.length : 0;
+                    return { i, numCount, total: vals.length, avgLen };
+                });
+
+                if (result.price === null) {
+                    // Buscar columna más numérica (> 60% numéricos)
+                    const bestPrice = stats
+                        .filter(s => !used.has(s.i) && s.total > 0 && (s.numCount / s.total) > 0.6)
+                        .sort((a, b) => (b.numCount / b.total) - (a.numCount / a.total))[0];
+                    if (bestPrice) { result.price = bestPrice.i; used.add(bestPrice.i); }
+                }
+
+                if (result.description === null) {
+                    // Buscar columna con texto más largo
+                    const bestDesc = stats
+                        .filter(s => !used.has(s.i) && s.avgLen > 5)
+                        .sort((a, b) => b.avgLen - a.avgLen)[0];
+                    if (bestDesc) { result.description = bestDesc.i; used.add(bestDesc.i); }
+                }
+            }
+
+            return result;
+        }
+
+        function setUploadState(state, msg = '') {
+            const icon = document.getElementById('upload-icon'), spinner = document.getElementById('upload-spinner');
+            const title = document.getElementById('upload-title'), subtitle = document.getElementById('upload-subtitle');
+            const zone = document.getElementById('upload-zone'), progWrap = document.getElementById('upload-progress-wrap');
+
+            if (state === 'loading') {
+                icon.classList.add('hidden'); spinner.classList.remove('hidden');
+                spinner.innerHTML = '<div class="ai-pulse"><span class="material-symbols-outlined">sync</span></div>';
+                progWrap.style.display = 'none';
+                title.textContent = 'Leyendo archivo...'; title.classList.add('text-blue-600');
+                subtitle.textContent = msg;
+                zone.classList.add('border-blue-400', 'bg-blue-50/30');
+            } else if (state === 'analyzing') {
+                icon.classList.add('hidden'); spinner.classList.add('hidden');
+                progWrap.style.display = 'block';
+                progWrap.classList.add('progress-active');
+                title.textContent = 'Detectando columnas...';
+                subtitle.textContent = msg;
+            } else {
+                icon.classList.remove('hidden'); spinner.classList.add('hidden');
+                progWrap.style.display = 'none';
+                progWrap.classList.remove('progress-active');
+                document.getElementById('upload-progress-bar').style.width = '0%';
+                title.textContent = 'Subir Archivo'; title.classList.remove('text-blue-600');
+                subtitle.textContent = 'XLSX, XLS o CSV';
+                zone.classList.remove('border-blue-400', 'bg-blue-50/30');
+            }
+        }
+
+        function updateProgress(percent) {
+            const bar = document.getElementById('upload-progress-bar');
+            bar.style.width = `${percent}%`;
+        }
+
+        function animateProgress(duration) {
+            return new Promise(resolve => {
+                let start = null;
+                function step(timestamp) {
+                    if (!start) start = timestamp;
+                    const progress = Math.min((timestamp - start) / duration, 1);
+                    updateProgress(progress * 100);
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        resolve();
+                    }
+                }
+                window.requestAnimationFrame(step);
+            });
+        }
+
+        // ── HUD Logic ──
+        let hudTimer = null;
+        let hudValue = 0;
+        let processCancelled = false;
+
+        function cancelarProceso() {
+            processCancelled = true;
+            hideHUD();
+            setUploadState(false);
+            document.getElementById('file-name-label').classList.add('hidden');
+        }
+
+        function showHUD(title, subtitle) {
+            processCancelled = false;
+            document.getElementById('hud-title').textContent = title;
+            document.getElementById('hud-subtitle').textContent = subtitle;
+            document.getElementById('ai-hud').classList.add('active');
+            hudValue = 0;
+            updateHUD(0);
+        }
+
+        function hideHUD() {
+            updateHUD(100);
+            setTimeout(() => {
+                document.getElementById('ai-hud').classList.remove('active');
+                if (hudTimer) clearInterval(hudTimer);
+            }, 300);
+        }
+
+        function updateHUD(val) {
+            hudValue = val;
+            document.getElementById('hud-percent').textContent = `${Math.floor(val)}%`;
+            document.getElementById('hud-bar').style.width = `${val}%`;
+        }
+
+        function startSimulatedProgress(target = 95, duration = 30000) {
+            if (hudTimer) clearInterval(hudTimer);
+            const stepTime = 100;
+            const steps = duration / stepTime;
+            const increment = (target - hudValue) / steps;
+
+            hudTimer = setInterval(() => {
+                if (hudValue < target) {
+                    updateHUD(hudValue + increment);
+                } else {
+                    clearInterval(hudTimer);
+                }
+            }, stepTime);
+        }
+
+        // ─── Memoria local (localStorage) ─────────────────────────────────
+        const MEMORY_KEY = 'trinity_mapping_memory';
+
+        function checkMemory(fingerprint) {
+            try {
+                const store = JSON.parse(localStorage.getItem(MEMORY_KEY) || '{}');
+                if (store[fingerprint]) return { match: true, data: store[fingerprint] };
+            } catch (e) { }
+            return { match: false };
+        }
+
+        function saveMemory(fingerprint, config) {
+            try {
+                const store = JSON.parse(localStorage.getItem(MEMORY_KEY) || '{}');
+                store[fingerprint] = config;
+                localStorage.setItem(MEMORY_KEY, JSON.stringify(store));
+            } catch (e) { console.warn('[Memoria] No se pudo guardar:', e); }
+        }
+
+        // ─── Leer archivo ──────────────────────────────────────────────────
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('file-name-label').textContent = file.name;
+            document.getElementById('file-name-label').classList.remove('hidden');
+
+            processCancelled = false;
+
+            try {
+                setUploadState('loading', 'Leyendo archivo...');
+                showHUD('Procesando Archivo', 'Extrayendo datos del documento...');
+                updateHUD(20);
+
+                const dataBuffer = await file.arrayBuffer();
+                if (processCancelled) return;
+
+                let jsonData;
+                const isCSV = file.name.toLowerCase().endsWith('.csv');
+
+                if (isCSV) {
+                    // Leer CSV como texto y parsear manualmente
+                    const text = new TextDecoder('utf-8').decode(dataBuffer);
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    jsonData = lines.map(line => {
+                        // Separar por coma o punto y coma
+                        const sep = line.includes(';') ? ';' : ',';
+                        return line.split(sep).map(v => v.trim().replace(/^"|"$/g, ''));
+                    });
+                } else {
+                    const workbook = XLSX.read(dataBuffer);
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                }
+
+                if (!jsonData || jsonData.length < 1) throw new Error('El archivo parece estar vacío.');
+
+                updateHUD(50);
+                if (processCancelled) return;
+
+                // Normalizar columnas
+                const rawHeaders = jsonData[0];
+                const colCount = rawHeaders.length;
+                fileHeaders = rawHeaders.map(h => String(h || ''));
+                fileRows = jsonData.slice(1)
+                    .map(row => Array.from({ length: colCount }, (_, i) => (row[i] !== undefined ? row[i] : '')))
+                    .filter(r => r.some(c => c !== '' && c != null));
+
+                console.log(`[Lector] ${fileHeaders.length} columnas, ${fileRows.length} filas cargadas.`);
+                updateHUD(70);
+                if (processCancelled) return;
+
+                // Huella del formato
+                activeFingerprint = fileHeaders.join('|');
+                let mapping = null;
+                let fromMemory = false;
+
+                // ── 1. Intentar cargar memoria local ──
+                const memRes = checkMemory(activeFingerprint);
+                if (memRes.match) {
+                    mapping = memRes.data;
+                    fromMemory = true;
+                    console.log('[Memoria] Formato conocido. Usando configuración guardada.');
+                }
+
+                updateHUD(85);
+
+                // ── 2. Si no hay memoria, usar heurística ──
+                if (!fromMemory) {
+                    mapping = mapearColumnasHeuristico(fileHeaders, fileRows.slice(0, 10));
+                    console.log('[Heurística] Mapeo detectado:', mapping);
+                }
+
+                updateHUD(100);
+                hideHUD();
+                inicializarMapper(mapping, fromMemory);
+
+            } catch (err) {
+                if (processCancelled) return;
+                console.error(err);
+                alert('Hubo un error procesando el archivo:\n' + err.message);
+            } finally {
+                if (!processCancelled) { setUploadState(false); }
+                document.getElementById('fileInput').value = '';
+            }
+        });
+
+        // ─── Inicializar mapper ────────────────────────────────────────────
+        function inicializarMapper(aiMapping = null, fromMemory = false) {
+            const mapper = document.getElementById('column-mapper');
+            mapper.classList.remove('hidden');
+            expandirMapper();
+
+            const summary = document.getElementById('mapper-summary');
+            if (fromMemory) {
+                summary.innerHTML = '<span class="text-emerald-600 font-semibold">¡Formato reconocido desde la memoria!</span> Confirma los campos antes de procesar.';
+            } else {
+                summary.textContent = 'Confirma los campos detectados automáticamente antes de procesar.';
+            }
+
+            mapper.style.animation = 'none';
+            requestAnimationFrame(() => { mapper.style.animation = ''; });
+
+            document.getElementById('row-count-badge').textContent = `${fileRows.length} filas`;
+            buildPreview();
+
+            let map;
+            const sels = {
+                price: document.getElementById('sel-price'),
+                desc: document.getElementById('sel-desc'),
+                code: document.getElementById('sel-code'),
+                provider: document.getElementById('sel-provider'),
+                discount: document.getElementById('sel-discount'),
+            };
+
+            if (aiMapping) {
+                map = {
+                    price: aiMapping.price,
+                    desc: aiMapping.description ?? aiMapping.desc,
+                    code: aiMapping.code,
+                    provider: aiMapping.provider,
+                    discount: aiMapping.discount ?? null
+                };
+            } else {
+                map = { price: null, desc: null, code: null, provider: null, discount: null };
+            }
+
+            const allFields = ['price', 'desc', 'code', 'provider', 'discount'];
+            allFields.forEach(f => {
+                sels[f].innerHTML = '';
+                if (f !== 'price' && f !== 'desc') {
+                    const opt = document.createElement('option');
+                    opt.value = '-1'; opt.textContent = '— Ninguna —';
+                    sels[f].appendChild(opt);
+                }
+                fileHeaders.forEach((h, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    const samples = fileRows.slice(0, 3)
+                        .map(r => String(r[i] ?? '').trim())
+                        .filter(v => v !== '')
+                        .slice(0, 2)
+                        .join(', ');
+                    const colLetter = getColumnLetter(i);
+                    opt.dataset.col = `Col. ${colLetter}`;
+                    opt.dataset.head = h ? h.substring(0, 20) : 'Sin encabezado';
+                    opt.dataset.sample = samples.substring(0, 45);
+                    // textContent as fallback
+                    opt.textContent = `Columna ${colLetter} ${h ? `(${h.substring(0, 10)})` : ''} → "${samples.substring(0, 22)}"`;
+                    sels[f].appendChild(opt);
+                });
+                const idx = map[f];
+                const auto = document.getElementById(`${f}-auto`);
+                if (idx !== null && idx !== undefined && idx >= 0 && idx < fileHeaders.length) {
+                    sels[f].value = idx;
+                    if (auto) {
+                        auto.classList.remove('hidden');
+                        if (aiMapping) {
+                            auto.querySelector('span').textContent = fromMemory ? '★ Memoria' : '❖ Auto';
+                            auto.querySelector('span').className = fromMemory
+                                ? 'auto-badge bg-emerald-100 text-emerald-700'
+                                : 'auto-badge bg-blue-100 text-blue-700';
+                        }
+                    }
+                } else {
+                    sels[f].value = '-1';
+                    if (auto) auto.classList.add('hidden');
+                }
+
+                // Convertir a Custom Dropdown
+                convertSelectToCustom(`sel-${f}`);
+            });
+
+            const emptyState = document.getElementById('results-empty-state');
+            if (emptyState) emptyState.classList.remove('hidden');
+
+            const resultsComplete = document.getElementById('results-processing-complete');
+            if (resultsComplete) resultsComplete.classList.add('hidden');
+
+            const resCount = document.getElementById('result-count');
+            if (resCount) resCount.classList.add('hidden');
+
+            sels.provider.addEventListener('change', () => {
+                const manualWrap = document.getElementById('provider-manual-wrap');
+                if (manualWrap) {
+                    manualWrap.classList.toggle('hidden', sels.provider.value !== '-1');
+                }
+            });
+        }
+
+        // ─── Preview ───────────────────────────────────────────────────────
+        function buildPreview() {
+            const PREVIEW_COUNT = 10;
+            if (!fileHeaders.length) return;
+
+            document.getElementById('preview-thead').innerHTML =
+                '<tr>' +
+                fileHeaders.map((h, i) => {
+                    const colLetter = getColumnLetter(i);
+                    return `<th class="border-b border-outline-variant/20 bg-surface-container-low/60 text-on-surface-variant min-w-[120px]">
+                        <div class="text-xs font-bold text-slate-800">${colLetter}</div>
+                        <div class="text-[10px] font-normal text-slate-500 truncate mt-0.5">${h}</div>
+                    </th>`;
+                }).join('') + '</tr>';
+
+            const rows = fileRows.slice(0, PREVIEW_COUNT);
+            document.getElementById('preview-tbody').innerHTML = rows.length > 0 ? rows.map(row =>
+                '<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/40 transition-colors">' +
+                fileHeaders.map((_, i) => {
+                    const val = String(row[i] ?? '');
+                    return `<td class="text-on-surface">${val.substring(0, 35)}${val.length > 35 ? '…' : ''}</td>`;
+                }).join('') + '</tr>'
+            ).join('') : `<tr><td colspan="${fileHeaders.length}" class="p-4 text-center text-slate-400 italic text-xs">No se pudieron leer filas del archivo.</td></tr>`;
+        }
+
+        // ─── Procesar datos ────────────────────────────────────────────────
+        function procesarDatos() {
+            const priceIdx = parseInt(document.getElementById('sel-price').value);
+            const descIdx = parseInt(document.getElementById('sel-desc').value);
+            const codeIdx = parseInt(document.getElementById('sel-code').value);
+            const providerIdx = parseInt(document.getElementById('sel-provider').value);
+            const discountIdx = parseInt(document.getElementById('sel-discount').value);
+            const manualProv = document.getElementById('provider-manual-input').value.trim();
+
+            // Función robusta para parsear precios de distintas regiones
+            function parseRobustPrice(val) {
+                if (val === null || val === undefined) return NaN;
+                let s = String(val).trim().replace(/[^\d,.]/g, '');
+                if (!s) return NaN;
+
+                const comma = s.lastIndexOf(',');
+                const dot = s.lastIndexOf('.');
+
+                if (comma > dot) {
+                    // Formato 1.234,56
+                    s = s.replace(/\./g, '').replace(',', '.');
+                } else if (dot > comma) {
+                    // Formato 1,234.56
+                    s = s.replace(/,/g, '');
+                }
+                return parseFloat(s);
+            }
+
+            currentProducts = fileRows
+                .filter(row => {
+                    const p = parseRobustPrice(row[priceIdx]);
+                    return !isNaN(p) && p > 0;
+                })
+                .map(row => {
+                    const rawDiscount = discountIdx >= 0 ? row[discountIdx] : null;
+                    const basePrice = parseRobustPrice(row[priceIdx]);
+
+                    let specialPrice = null;
+                    let specialObs = null;
+
+                    if (rawDiscount !== null && rawDiscount !== '') {
+                        const rawStr = String(rawDiscount).trim();
+                        if (rawStr.includes('%')) {
+                            const pct = parseFloat(rawStr.replace(/[^0-9.]/g, ''));
+                            if (!isNaN(pct) && pct > 0) {
+                                specialPrice = basePrice * (1 - pct / 100);
+                            } else {
+                                specialObs = rawStr;
+                            }
+                        } else {
+                            const valAbs = parseRobustPrice(rawStr);
+                            if (!isNaN(valAbs) && valAbs > 0) {
+                                specialPrice = valAbs;
+                            } else {
+                                specialObs = rawStr;
+                            }
+                        }
+                    }
+
+                    return {
+                        provider: providerIdx >= 0 ? String(row[providerIdx] || '—') : (manualProv || 'General'),
+                        code: codeIdx >= 0 ? String(row[codeIdx] || '—') : '—',
+                        description: String(row[descIdx] || '—'),
+                        base_price: basePrice,
+                        special_price: specialPrice,
+                        special_obs: specialObs,
+                    };
+                });
+
+            // Consolidar Memoria local (aprender de las correcciones del usuario)
+            if (activeFingerprint) {
+                const finalConfig = {
+                    price: priceIdx,
+                    description: descIdx,
+                    code: codeIdx >= 0 ? codeIdx : null,
+                    provider: providerIdx >= 0 ? providerIdx : null,
+                    discount: discountIdx >= 0 ? discountIdx : null
+                };
+                saveMemory(activeFingerprint, finalConfig);
+                console.log('[Memoria] Formato guardado en localStorage.');
+            }
+
+            // Actualizar Título y Visibilidad
+            const resultsTitle = document.getElementById('results-title');
+            const actualFileName = document.getElementById('file-name-label').textContent;
+            if (resultsTitle) resultsTitle.textContent = actualFileName || 'Cálculo de Precios';
+
+            actualizarResultados();
+
+            const pH = priceIdx >= 0 && priceIdx < fileHeaders.length ? fileHeaders[priceIdx] : 'N/A';
+            const dH = descIdx >= 0 && descIdx < fileHeaders.length ? fileHeaders[descIdx] : 'N/A';
+            const summaryLabel = document.getElementById('mapper-summary');
+            if (summaryLabel) {
+                summaryLabel.textContent = `Precio: "${pH.substring(0, 15)}" · Descripción: "${dH.substring(0, 20)}" · ${currentProducts.length} productos`;
+            }
+            colapsarMapper();
+
+            setTimeout(() => {
+                document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 400);
+        }
+
+        // ─── Toggle mapper ─────────────────────────────────────────────────
+        function toggleMapper() {
+            if (mapperExpanded) colapsarMapper(); else expandirMapper();
+        }
+        function colapsarMapper() {
+            document.getElementById('mapper-body').classList.add('collapsed');
+            document.getElementById('mapper-chevron').classList.add('collapsed');
+            mapperExpanded = false;
+        }
+        function expandirMapper() {
+            document.getElementById('mapper-body').classList.remove('collapsed');
+            document.getElementById('mapper-chevron').classList.remove('collapsed');
+            mapperExpanded = true;
+        }
+
+        // ─── Toggle precio BCV / Binance ───────────────────────────────────
+        function togglePrecio(tipo) {
+            activePrecio = tipo;
+            const btnBcv = document.getElementById('toggle-bcv');
+            const btnBnb = document.getElementById('toggle-binance');
+
+            if (tipo === 'bcv') {
+                btnBcv.classList.add('active-bcv', 'font-bold', 'text-slate-600');
+                btnBcv.classList.remove('font-medium', 'text-slate-500');
+                btnBnb.classList.remove('active-binance', 'font-bold', 'text-slate-600');
+                btnBnb.classList.add('font-medium', 'text-slate-500');
+            } else {
+                btnBnb.classList.add('active-binance', 'font-bold', 'text-slate-600');
+                btnBnb.classList.remove('font-medium', 'text-slate-500');
+                btnBcv.classList.remove('active-bcv', 'font-bold', 'text-slate-600');
+                btnBcv.classList.add('font-medium', 'text-slate-500');
+            }
+
+            if (currentProducts && currentProducts.length) {
+                filtrarProductos(); // Re-render the modal table
+            }
+        }
+
+        // ─── Exportar XLSX ─────────────────────────────────────────────────
+        function exportarXLSX() {
+            if (!currentProducts.length) return;
+            const tasaEntrada = activePrecio === 'bcv' ? TASA_BCV : TASA_BINANCE;
+
+            // Arreglo de Arreglos (Para permitir encabezados duplicados como pide la imagen)
+            const wsData = [
+                ['CÓDIGO', 'DESCRIPCIÓN', 'PRECIO DEL PRODUCTO', 'Bs BCV', 'BCV ($)', 'BINANCE ($)', 'Precio con descuento especial', 'Bs BCV', 'BCV ($)', 'BINANCE ($)']
+            ];
+
+            currentProducts.forEach(p => {
+                // Precios Base
+                const totalBs = p.base_price * tasaEntrada;
+                const bcvUsd = +(totalBs / TASA_BCV).toFixed(2);
+                const bnbUsd = +(totalBs / TASA_BINANCE).toFixed(2);
+
+                // Descuento Especial
+                const hasSpecialPrice = p.special_price !== null;
+                let effectivePrice = '', effTotalBs = '', effBcvUsd = '', effBnbUsd = '';
+
+                if (hasSpecialPrice) {
+                    effectivePrice = +(p.special_price).toFixed(2);
+                    effTotalBs = +(effectivePrice * tasaEntrada).toFixed(2);
+                    effBcvUsd = +(effTotalBs / TASA_BCV).toFixed(2);
+                    effBnbUsd = +(effTotalBs / TASA_BINANCE).toFixed(2);
+                } else if (p.special_obs) {
+                    // Si no es numérico pero hay un texto especial
+                    effectivePrice = p.special_obs;
+                }
+
+                wsData.push([
+                    p.code,
+                    p.description,
+                    +(p.base_price).toFixed(2),
+                    +totalBs.toFixed(2),
+                    bcvUsd,
+                    bnbUsd,
+                    effectivePrice,
+                    effTotalBs,
+                    effBcvUsd,
+                    effBnbUsd
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            ws['!cols'] = [
+                { wch: 15 }, // CODIGO
+                { wch: 45 }, // DESCRIPCION
+                { wch: 22 }, // PRECIO
+                { wch: 15 }, // BS
+                { wch: 10 }, // BCV $
+                { wch: 12 }, // BINANCE $
+                { wch: 28 }, // PRECIO CON DESC
+                { wch: 15 }, // BS DESC
+                { wch: 10 }, // BCV $ DESC
+                { wch: 12 }  // BINANCE $ DESC
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Trinity Calculos');
+            const fileName = activePrecio === 'bcv' ? 'Trinity_CalcBCV' : 'Trinity_CalcBinance';
+            XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        // ─── UI Resultados y Modal ─────────────────────────────────────────
+        function actualizarResultados() {
+            const isBcv = activePrecio === 'bcv';
+
+            // Ocultar empty state inicial
+            document.getElementById('results-empty-state').classList.add('hidden');
+
+            // Llenar datos de éxito
+            const countEl = document.getElementById('result-count');
+            countEl.textContent = currentProducts.length;
+
+            const titleEl = document.querySelector('#results-processing-complete h3');
+            const subTitleEl = document.querySelector('#results-processing-complete p');
+
+            if (currentProducts.length === 0) {
+                titleEl.textContent = 'No se detectaron productos';
+                titleEl.className = 'font-headline text-2xl font-bold text-red-700 tracking-tight';
+                subTitleEl.textContent = 'Trinity no pudo extraer precios válidos del archivo. Verifica que la columna seleccionada tenga valores numéricos mayores a 0.';
+            } else {
+                titleEl.textContent = '¡Cálculos Completados!';
+                titleEl.className = 'font-headline text-2xl font-bold text-slate-800 tracking-tight';
+                subTitleEl.textContent = 'Trinity ha procesado y aplicado las fórmulas de tasas correctamente a todos los productos según los parámetros configurados.';
+            }
+
+            // Mostrar bloque éxito
+            document.getElementById('results-processing-complete').classList.remove('hidden');
+        }
+
+        function abrirVistaPrevia() {
+            if (!currentProducts || !currentProducts.length) return;
+
+            document.getElementById('modal-subtitle-text').textContent = currentProducts.length;
+            document.getElementById('productSearch').value = '';
+
+            // Generar tabla completa
+            actualizarModal(currentProducts);
+
+            // Mostrar modal
+            document.getElementById('preview-modal').showModal();
+        }
+
+        function filtrarProductos() {
+            const query = document.getElementById('productSearch').value.toLowerCase().trim();
+            if (!query) {
+                actualizarModal(currentProducts);
+                return;
+            }
+            const filtered = currentProducts.filter(p =>
+                p.description.toLowerCase().includes(query) ||
+                p.code.toLowerCase().includes(query) ||
+                p.provider.toLowerCase().includes(query)
+            );
+            actualizarModal(filtered);
+        }
+
+        function actualizarModal(productsList) {
+            const isBcv = activePrecio === 'bcv';
+            const tasaEntrada = isBcv ? TASA_BCV : TASA_BINANCE;
+            const tbody = document.getElementById('modal-tbody');
+
+            if (!productsList || productsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-12 text-center text-on-surface-variant italic">No se encontraron productos.</td></tr>`;
+                return;
+            }
+
+            // Usamos un array y join para performance al inyectar miles de filas de un golpe
+            const htmlArr = productsList.map((p, idx) => {
+                const totalBs = p.base_price * tasaEntrada;
+                const bcvUsd = +(totalBs / TASA_BCV).toFixed(2);
+                const bnbUsd = +(totalBs / TASA_BINANCE).toFixed(2);
+
+                const hasSpecialPrice = p.special_price !== null;
+                let efPrice = '', efBs = '', efBcvU = '', efBnbU = '';
+
+                if (hasSpecialPrice) {
+                    const priceVal = +(p.special_price).toFixed(2);
+                    efPrice = priceVal;
+                    const eBsVal = priceVal * tasaEntrada;
+                    efBs = +(eBsVal).toFixed(2);
+                    efBcvU = +(eBsVal / TASA_BCV).toFixed(2);
+                    efBnbU = +(eBsVal / TASA_BINANCE).toFixed(2);
+                } else if (p.special_obs) {
+                    efPrice = p.special_obs;
+                }
+
+                const delay = Math.min(idx * 5, 200); // animar rapidito solo las primeras
+
+                return `
+                    <tr class="${idx < 50 ? 'row-anim ' : ''}border-b border-outline-variant/30 hover:bg-slate-50 transition-colors" style="animation-delay:${delay}ms">
+                        <td class="p-3 text-slate-800 font-mono tracking-tight font-medium">${p.code}</td>
+                        <td class="p-3 text-slate-600 truncate max-w-[300px] border-r border-outline-variant/10 whitespace-normal leading-tight" title="${p.description}">${p.description}</td>
+                        <td class="p-3 text-right font-medium text-slate-800 bg-slate-50/50">$${p.base_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="p-3 text-right text-slate-600">Bs. ${totalBs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="p-3 text-right text-slate-600 font-medium">$${bcvUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="p-3 text-right text-slate-600 border-r-2 border-outline-variant/30 font-medium">$${bnbUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        
+                        <td class="p-3 text-emerald-800 bg-emerald-50/40">${typeof efPrice === 'number' ? '$' + efPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : efPrice}</td>
+                        <td class="p-3 text-right text-emerald-700 bg-emerald-50/40">${efBs ? 'Bs. ' + Number(efBs).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}</td>
+                        <td class="p-3 text-right text-emerald-700 font-medium bg-emerald-50/40">${efBcvU ? '$' + Number(efBcvU).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}</td>
+                        <td class="p-3 text-right text-emerald-700 font-medium bg-emerald-50/40">${efBnbU ? '$' + Number(efBnbU).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = htmlArr.join('');
+        }
+    </script>
+</body>
+
+</html>
