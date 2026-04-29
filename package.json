@@ -1,7 +1,7 @@
 {
   "name": "trinity-app",
-  "version": "1.0.0",
-  "description": "Trinity Tool - Calculadora Inteligente",
+  "version": "1.0.2",
+  "description": "Trinity",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -15,10 +15,12 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "electron-updater": "^6.8.3"
+    "electron-updater": "^6.8.3",
+    "googleapis": "^171.4.0"
   },
   "build": {
     "appId": "com.trinity.app",
+    "productName": "Trinity",
     "publish": [
       {
         "provider": "github",
@@ -28,7 +30,8 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/logo.ico"
     }
   }
 }

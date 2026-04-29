@@ -2,3 +2,6 @@ node_modules/
 dist/
 out/
 .env
+*.json
+!package.json
+!package-lock.json
