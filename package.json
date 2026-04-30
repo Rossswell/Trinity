@@ -1,6 +1,6 @@
 {
   "name": "trinity-app",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Trinity",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
-  "author": "Santi",
+  "author": "Santiago",
   "license": "ISC",
   "devDependencies": {
     "electron": "^30.0.0",
