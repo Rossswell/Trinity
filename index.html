@@ -4320,8 +4320,18 @@
 
                 window.api.onUpdateMessage((message) => {
                     const isAvailable = /disponible|available/i.test(message) && !/not available/i.test(message);
+                    const isChecking = /buscando|checking/i.test(message);
+                    const isDone = !isAvailable && !isChecking;
                     if (isAvailable) {
-                        document.getElementById('update-overlay')?.classList.remove('hidden');
+                        const title = document.getElementById('update-overlay-title');
+                        const desc = document.getElementById('update-overlay-desc');
+                        if (title) title.textContent = 'Actualización disponible';
+                        if (desc) desc.innerHTML = 'El sistema se actualizará automáticamente.<br>Actualiza para evitar errores y bugs.';
+                        const status = document.getElementById('update-overlay-status');
+                        if (status) status.textContent = 'Descargando actualización...';
+                    }
+                    if (isDone) {
+                        document.getElementById('update-overlay')?.classList.add('hidden');
                     }
                     const isOk = /actualizada|not available/i.test(message);
                     showToast(message, isOk ? 'success' : 'info');
@@ -7713,7 +7723,7 @@
         </div>
     </div>
 
-    <div id="update-overlay" class="hidden fixed inset-0 z-[99999] flex flex-col items-center justify-center"
+    <div id="update-overlay" class="fixed inset-0 z-[99999] flex flex-col items-center justify-center"
         style="background:rgba(0,0,0,0.92);backdrop-filter:blur(12px)">
         <div class="flex flex-col items-center gap-6 max-w-sm w-full px-6 text-center">
             <!-- Logo -->
@@ -7728,9 +7738,8 @@
             </div>
             <!-- Textos -->
             <div>
-                <h2 class="font-['Manrope'] text-2xl font-bold text-white mb-2">Actualización disponible</h2>
-                <p class="text-white/60 text-sm leading-relaxed">El sistema se actualizará automáticamente.<br>Actualiza
-                    para evitar errores y bugs.</p>
+                <h2 id="update-overlay-title" class="font-['Manrope'] text-2xl font-bold text-white mb-2">Comprobando actualizaciones</h2>
+                <p id="update-overlay-desc" class="text-white/60 text-sm leading-relaxed">Por favor espera un momento...</p>
             </div>
             <!-- Barra de progreso -->
             <div class="w-full">
@@ -7738,7 +7747,7 @@
                     <div id="update-overlay-bar" class="h-full rounded-full transition-all duration-300"
                         style="width:0%;background:linear-gradient(90deg,#3b82f6,#6366f1)"></div>
                 </div>
-                <p id="update-overlay-status" class="text-white/40 text-xs mt-2">Descargando actualización...</p>
+                <p id="update-overlay-status" class="text-white/40 text-xs mt-2">Verificando versión...</p>
             </div>
             <!-- Versión -->
             <p id="update-overlay-version" class="text-white/20 text-[11px] font-['Manrope'] tracking-widest">V. 1.0.1
