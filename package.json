@@ -1,6 +1,6 @@
 {
   "name": "trinity-app",
-  "version": "1.0.4",
+  "version": "1.0.9",
   "description": "Trinity",
   "main": "main.js",
   "scripts": {
@@ -26,7 +26,6 @@
         "provider": "github",
         "owner": "Rossswell",
         "repo": "Trinity",
-        "private": true,
         "releaseType": "release"
       }
     ],
