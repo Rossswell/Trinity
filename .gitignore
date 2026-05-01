@@ -2,6 +2,8 @@ node_modules/
 dist/
 out/
 .env
+scratch.js
+test.js
 *.json
 !package.json
 !package-lock.json
