@@ -1,6 +1,6 @@
 {
   "name": "trinity-app",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Trinity",
   "main": "main.js",
   "scripts": {
