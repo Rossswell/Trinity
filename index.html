@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Trinity 1.0.9</title>
+    <title>Trinity 1.0.10</title>
     <link rel="icon" type="image/x-icon" href="assets/logo.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/logo_32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/logo_16.png" />
@@ -2787,7 +2787,7 @@
                 <div class="flex flex-col nav-label">
                     <span class="font-['Manrope'] text-lg font-bold leading-tight" style="color:#ffffff;">Trinity</span>
                     <span id="sidebar-version" class="font-['Manrope'] font-semibold leading-tight"
-                        style="color:#ffffff;font-size:9px;letter-spacing:0.12em;">V. 1.0.9</span>
+                        style="color:#ffffff;font-size:9px;letter-spacing:0.12em;">V. 1.0.10</span>
                 </div>
             </div>
             <button onclick="toggleSidebar()" class="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
@@ -5759,16 +5759,6 @@
                     if (ov) ov.textContent = `V. ${v}`;
                 }).catch(() => { });
 
-                let updateStuckTimer = null;
-                const UPDATE_STUCK_MS = 50000;
-
-                const resetStuckTimer = () => {
-                    clearTimeout(updateStuckTimer);
-                    updateStuckTimer = setTimeout(() => {
-                        document.getElementById('update-overlay')?.classList.add('hidden');
-                    }, UPDATE_STUCK_MS);
-                };
-
                 window.api.onUpdateMessage((message) => {
                     const isAvailable = /disponible|available/i.test(message) && !/not available/i.test(message);
                     if (isAvailable) {
@@ -5779,14 +5769,12 @@
                         if (desc) desc.innerHTML = 'El sistema se actualizará automáticamente.<br>Actualiza para evitar errores y bugs.';
                         if (status) status.textContent = 'Descargando actualización...';
                         document.getElementById('update-overlay')?.classList.remove('hidden');
-                        resetStuckTimer();
                     }
                     const isOk = /actualizada|not available/i.test(message);
                     showToast(message, isOk ? 'success' : 'info');
                 });
 
                 window.api.onUpdateProgress((percent) => {
-                    resetStuckTimer();
                     const bar = document.getElementById('update-overlay-bar');
                     const status = document.getElementById('update-overlay-status');
                     if (bar) bar.style.width = Math.round(percent) + '%';
